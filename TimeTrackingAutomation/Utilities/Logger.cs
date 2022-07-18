@@ -2,6 +2,7 @@
 using Smartsheet.Api.Models;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -39,35 +40,41 @@ namespace TimeTrackingAutomation.Utilities
 		}
 		public static void LogJobRun(string startTime, string finishTime, string notes, bool failed)
 		{
+			long sheetid = Convert.ToInt64(ConfigurationManager.AppSettings["JiraTempoConfigsheet"]);
+			//Sheet sheet = Client.GetSheet(sheetid);
+			RunLogSheet = Client.GetSheet(sheetid);
+			
 			var rowToAdd = new List<Row>
 			{
 				new Row
 				{
 					Cells = new List<Cell>()
 					{
+						//new Cell()
+						//{
+						//	ColumnId = RunLogSheet.GetColumnByTitle("Last Run TimeStamp").Id,
+						//	Value = startTime
+						//},
 						new Cell()
 						{
-							ColumnId = RunLogSheet.GetColumnByTitle("Job Start Time").Id,
-							Value = startTime
-						},
-						new Cell()
-						{
-							ColumnId = RunLogSheet.GetColumnByTitle("Job Finish Time").Id,
+							ColumnId = RunLogSheet.GetColumnByTitle("Last Run TimeStamp").Id,
 							Value = finishTime
 						},
 						new Cell()
 						{
-							ColumnId = RunLogSheet.GetColumnByTitle("Notes").Id,
+							ColumnId = RunLogSheet.GetColumnByTitle("Last Run Status").Id,
 							Value = notes
-						},
-						new Cell()
-						{
-							ColumnId = RunLogSheet.GetColumnByTitle("Failed").Id,
-							Value = failed
 						}
+						//,new Cell()
+						//{
+						//	ColumnId = RunLogSheet.GetColumnByTitle("Failed").Id,
+						//	Value = failed
+						//}
 					}
 				}
 			};
+			IList<Row> updatedRow = Client.SheetResources.RowResources.UpdateRows(sheetid, rowToAdd);
+			//var runLogResult = Client.SheetResources.RowResources.UpdateRows(sheetid, rowToAdd);
 		}
 	}
 }

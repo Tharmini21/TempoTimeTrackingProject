@@ -16,12 +16,10 @@ namespace TimeTrackingAutomation.Process
 	{
 
 		private const string PROCESS = "Time Api Process";
-
 		public string token = ConfigurationManager.AppSettings["TempoAccessToken"];
 
 		public ResultObject Getteams()
 		{
-			Logger.LogToConsole($"Starting {PROCESS}");
 			try
 			{
 				{
@@ -32,11 +30,12 @@ namespace TimeTrackingAutomation.Process
 					HttpResponseMessage response = Client.SendAsync(request).Result;
 					string res = response.Content.ReadAsStringAsync().Result;
 					ResultObject data = System.Text.Json.JsonSerializer.Deserialize<ResultObject>(res);
-					Logger.LogToConsole($"{PROCESS} complete");
-
-					foreach (var mem in data.results)
+					if (data.results.Count > 0)
 					{
-						GetteamsMembers(mem.id);
+						foreach (var team in data.results)
+						{
+							GetteamsMembers(team.id);
+						}
 					}
 					return data;
 				}
@@ -48,8 +47,79 @@ namespace TimeTrackingAutomation.Process
 				throw ex;
 			}
 		}
+		public MembersResultObject GetteamsMembers(int teamid)
+		{
+			try
+			{
 
-		public JObject GetteamsMembers(int teamid)
+				var Client = new HttpClient();
+				string urlStr = "https://api.tempo.io/core/3/teams/" + teamid + "/members";
+				HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, urlStr);
+				request.Headers.Add("Authorization", "Bearer " + token);
+				HttpResponseMessage response = Client.SendAsync(request).Result;
+				string res = response.Content.ReadAsStringAsync().Result;
+				MembersResultObject data = System.Text.Json.JsonSerializer.Deserialize<MembersResultObject>(res);
+				foreach (var item in data.results)
+				{
+					if (item != null)
+					{
+						//string useraccountid = Convert.ToString(item.SelectToken("member.accountId"));
+						string useraccountid = Convert.ToString(item.member.accountId);
+						string fromdate = Convert.ToString(ConfigurationManager.AppSettings["Fromdate"]);
+						string todate = Convert.ToString(ConfigurationManager.AppSettings["Todate"]);
+						GetworklogwithDate(useraccountid, fromdate, todate);
+
+					}
+				}
+				return data;
+
+			}
+			catch (Exception ex)
+			{
+				Logger.LogToConsole(ex.Message);
+				throw ex;
+			}
+		}
+		public RootObject GetworklogwithDate(string userId, string fromdate, string todate)
+		{
+			string query = "https://api.tempo.io/core/3/worklogs/user/" + userId + "?from=" + fromdate + "&to=" + todate + "";
+			try
+			{
+				{
+					var Client = new HttpClient();
+					string urlStr = query;
+					HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, urlStr);
+					request.Headers.Add("Authorization", "Bearer " + token);
+					HttpResponseMessage response = Client.SendAsync(request).Result;
+					string res = response.Content.ReadAsStringAsync().Result;
+					RootObject responsedata = System.Text.Json.JsonSerializer.Deserialize<RootObject>(res);
+					if (responsedata.results.Count > 0)
+					{
+						SmartsheetClass st = new SmartsheetClass();
+
+						List<OpportunityRollupsheet> result = st.GetOpportunityRollupsheet(4614195078555524);
+						//List<OpportunityRollupsheet> result = st.GetOpportunityRollupsheet(4614195078555524);
+						foreach (var item in responsedata.results)
+						{
+							foreach (var rollup in result)
+							{
+								if (item.issue.id == rollup.IssueId)
+								{
+									st.AddTempoSheetDetail(item, rollup.TimeTrackingSheetID);
+								}
+							}
+						}
+					}
+					return responsedata;
+				}
+			}
+			catch (Exception ex)
+			{
+				Logger.LogToConsole(ex.Message);
+				throw ex;
+			}
+		}
+		public JObject GetteamsMembers1(int teamid)
 		{
 			try
 			{
@@ -61,14 +131,15 @@ namespace TimeTrackingAutomation.Process
 				HttpResponseMessage response = Client.SendAsync(request).Result;
 				string res = response.Content.ReadAsStringAsync().Result;
 				var jObject = JObject.Parse(res);
-				foreach (var item in jObject)
+				JArray jarr = (JArray)jObject["results"];
+				foreach (var item in jarr)
 				{
-					if (item.Key == "results")
+					if (item != null)
 					{
-						string userid = "62c55db91bb561c33795c2ee";
-						DateTime fromdate = Convert.ToDateTime("2022-06-01");
-						DateTime todate = Convert.ToDateTime("2022-07-31");
-						GetworklogwithDate(userid, fromdate, todate);
+						string useraccountid = Convert.ToString(item.SelectToken("member.accountId"));
+						string fromdate = Convert.ToString("2022-06-01");
+						string todate = Convert.ToString("2022-07-31");
+						GetworklogwithDate(useraccountid, fromdate, todate);
 
 					}
 				}
@@ -99,14 +170,17 @@ namespace TimeTrackingAutomation.Process
 					//List<OpportunityRollupsheet> result = st.GetOpportunityRollupsheet(4614195078555524);
 					//foreach (var item in data.results)
 					//{
-					//		foreach (var rollup in result)
-					//		{
+					//	foreach (var rollup in result)
+					//	{
 
 					//		if (item.issue.id == rollup.IssueId)
 					//		{
 					//			st.AddTempoSheetDetail(item, rollup.TimeTrackingSheetID);
 
 					//		}
+					//		//else {
+					//		//	st.AddTempoSheetDetail(item, rollup.TimeTrackingSheetID);
+					//		//}
 
 					//	}
 					//}
@@ -146,32 +220,12 @@ namespace TimeTrackingAutomation.Process
 			try
 			{
 				{
+					string fromdate = Convert.ToString(ConfigurationManager.AppSettings["Fromdate"]);
+					string todate = Convert.ToString(ConfigurationManager.AppSettings["Todate"]);
+					string query = "https://api.tempo.io/core/3/worklogs/project/" + projectkey + "?from=" + fromdate + "&to=" + todate + "";
 					var Client = new HttpClient();
-					string urlStr = "https://api.tempo.io/core/3/worklogs/project/" + projectkey;
-					HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, urlStr);
-					request.Headers.Add("Authorization", "Bearer " + token);
-					HttpResponseMessage response = Client.SendAsync(request).Result;
-					string res = response.Content.ReadAsStringAsync().Result;
-					RootObject data = System.Text.Json.JsonSerializer.Deserialize<RootObject>(res);
-					return data;
-				}
-			}
-			catch (Exception ex)
-			{
-				Logger.LogToConsole(ex.Message);
-				throw ex;
-			}
-		}
-
-		public RootObject GetworklogwithDate(string userId, DateTime fromdate, DateTime todate)
-		{
-			string query = "https://api.tempo.io/core/3/worklogs/user/" + userId + "?from=" + fromdate + "&to=" + todate + "";
-			try
-			{
-				{
-					var Client = new HttpClient();
-					string urlStr = query;
-					HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, urlStr);
+					//string urlStr = "https://api.tempo.io/core/3/worklogs/project/" + projectkey;
+					HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, query);
 					request.Headers.Add("Authorization", "Bearer " + token);
 					HttpResponseMessage response = Client.SendAsync(request).Result;
 					string res = response.Content.ReadAsStringAsync().Result;

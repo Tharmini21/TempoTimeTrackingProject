@@ -8,7 +8,7 @@ namespace TimeTrackingAutomation.Process.TempoModel
 	public class OpportunityRollupsheet
 	{
 		public int ProjectId { get; set; }
-		public string ProjectName { get; set; }
+		public string ProjectKey { get; set; }
 		public int IssueId { get; set; }
 		public string IssueKey { get; set; }
 		public string TimeTrackingSheetLinks { get; set; }

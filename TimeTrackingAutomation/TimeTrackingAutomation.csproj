@@ -100,6 +100,7 @@
     <Compile Include="Process\JiraTempoApi.cs" />
     <Compile Include="Process\SmartsheetAutomation.cs" />
     <Compile Include="Process\SmartsheetClass.cs" />
+    <Compile Include="Process\MembersModel.cs" />
     <Compile Include="Process\TempoModel\OpportunityRollupsheet.cs" />
     <Compile Include="Process\TempoModel\ConfigSheet.cs" />
     <Compile Include="Process\TempoModel\TeamModel.cs" />
