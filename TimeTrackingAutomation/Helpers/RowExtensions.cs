@@ -14,5 +14,12 @@ namespace TimeTrackingAutomation.Helpers
 			var cell = row.Cells.FirstOrDefault(c => c.ColumnId == sheet.Columns.FirstOrDefault(col => col.Title == columnName)?.Id);
 			return cell;
 		}
+
+		public static string GetValueForColumnAsString(this Row row, Sheet sheet, string columnName)
+		{
+			var cell = row.GetCellForColumn(sheet, columnName);
+			return cell?.Value == null ? "" : cell?.Value.ToString();
+		}
+
 	}
 }

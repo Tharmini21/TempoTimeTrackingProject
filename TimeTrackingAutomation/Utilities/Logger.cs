@@ -17,9 +17,10 @@ namespace TimeTrackingAutomation.Utilities
 		private static readonly string AssemblyPath =
 			System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
 		//private static Sheet ErrorSheet;
-		private static SmartsheetClient Client;
 		private static string Process;
 		private static Sheet RunLogSheet;
+		private static SmartsheetClient Client;
+		
 		public static void LogToConsole(string message)
 		{
 			Console.WriteLine($"{DateTime.Now.ToString(CultureInfo.CurrentCulture)}: {message}");
@@ -38,43 +39,6 @@ namespace TimeTrackingAutomation.Utilities
 			Client = client;
 			Process = automation.GetType().Name;
 		}
-		public static void LogJobRun(string startTime, string finishTime, string notes, bool failed)
-		{
-			long sheetid = Convert.ToInt64(ConfigurationManager.AppSettings["JiraTempoConfigsheet"]);
-			//Sheet sheet = Client.GetSheet(sheetid);
-			RunLogSheet = Client.GetSheet(sheetid);
-			
-			var rowToAdd = new List<Row>
-			{
-				new Row
-				{
-					Cells = new List<Cell>()
-					{
-						//new Cell()
-						//{
-						//	ColumnId = RunLogSheet.GetColumnByTitle("Last Run TimeStamp").Id,
-						//	Value = startTime
-						//},
-						new Cell()
-						{
-							ColumnId = RunLogSheet.GetColumnByTitle("Last Run TimeStamp").Id,
-							Value = finishTime
-						},
-						new Cell()
-						{
-							ColumnId = RunLogSheet.GetColumnByTitle("Last Run Status").Id,
-							Value = notes
-						}
-						//,new Cell()
-						//{
-						//	ColumnId = RunLogSheet.GetColumnByTitle("Failed").Id,
-						//	Value = failed
-						//}
-					}
-				}
-			};
-			IList<Row> updatedRow = Client.SheetResources.RowResources.UpdateRows(sheetid, rowToAdd);
-			//var runLogResult = Client.SheetResources.RowResources.UpdateRows(sheetid, rowToAdd);
-		}
+
 	}
 }

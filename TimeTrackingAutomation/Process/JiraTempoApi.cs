@@ -96,9 +96,7 @@ namespace TimeTrackingAutomation.Process
 					if (responsedata.results.Count > 0)
 					{
 						SmartsheetClass st = new SmartsheetClass();
-
 						List<OpportunityRollupsheet> result = st.GetOpportunityRollupsheet(4614195078555524);
-						//List<OpportunityRollupsheet> result = st.GetOpportunityRollupsheet(4614195078555524);
 						foreach (var item in responsedata.results)
 						{
 							foreach (var rollup in result)
@@ -155,33 +153,32 @@ namespace TimeTrackingAutomation.Process
 		}
 		public RootObject Getworklog()
 		{
+			string fromdate = Convert.ToString(ConfigurationManager.AppSettings["Fromdate"]);
+			string todate = Convert.ToString(ConfigurationManager.AppSettings["Todate"]);
+			string query = "https://api.tempo.io/core/3/worklogs"+"?from=" + fromdate + "&to=" + todate + "";
 			try
 			{
 				{
 					var Client = new HttpClient();
-					string urlStr = "https://api.tempo.io/core/3/worklogs";
+					string urlStr = query;
 					HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, urlStr);
 					request.Headers.Add("Authorization", "Bearer " + token);
 					HttpResponseMessage response = Client.SendAsync(request).Result;
 					string res = response.Content.ReadAsStringAsync().Result;
 					RootObject data = System.Text.Json.JsonSerializer.Deserialize<RootObject>(res);
-
-					//SmartsheetClass st = new SmartsheetClass();
-					//List<OpportunityRollupsheet> result = st.GetOpportunityRollupsheet(4614195078555524);
-					//foreach (var item in data.results)
+					//if (data.results.Count > 0)
 					//{
-					//	foreach (var rollup in result)
+					//	SmartsheetClass st = new SmartsheetClass();
+					//	List<OpportunityRollupsheet> result = st.GetOpportunityRollupsheet(4614195078555524);
+					//	foreach (var item in data.results)
 					//	{
-
-					//		if (item.issue.id == rollup.IssueId)
+					//		foreach (var rollup in result)
 					//		{
-					//			st.AddTempoSheetDetail(item, rollup.TimeTrackingSheetID);
-
+					//			if (item.issue.key == rollup.IssueKey)
+					//			{
+					//				st.AddTempoSheetDetail(item, rollup.TimeTrackingSheetID);
+					//			}
 					//		}
-					//		//else {
-					//		//	st.AddTempoSheetDetail(item, rollup.TimeTrackingSheetID);
-					//		//}
-
 					//	}
 					//}
 					return data;
