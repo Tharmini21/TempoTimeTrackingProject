@@ -59,12 +59,12 @@ namespace TimeTrackingAutomation.Process
 				HttpResponseMessage response = Client.SendAsync(request).Result;
 				string res = response.Content.ReadAsStringAsync().Result;
 				MembersResultObject data = System.Text.Json.JsonSerializer.Deserialize<MembersResultObject>(res);
-				foreach (var item in data.results)
+				foreach (var memobj in data.results)
 				{
-					if (item != null)
+					if (memobj != null)
 					{
 						//string useraccountid = Convert.ToString(item.SelectToken("member.accountId"));
-						string useraccountid = Convert.ToString(item.member.accountId);
+						string useraccountid = Convert.ToString(memobj.member.accountId);
 						string fromdate = Convert.ToString(ConfigurationManager.AppSettings["Fromdate"]);
 						string todate = Convert.ToString(ConfigurationManager.AppSettings["Todate"]);
 						GetworklogwithDate(useraccountid, fromdate, todate);
@@ -93,21 +93,6 @@ namespace TimeTrackingAutomation.Process
 					HttpResponseMessage response = Client.SendAsync(request).Result;
 					string res = response.Content.ReadAsStringAsync().Result;
 					RootObject responsedata = System.Text.Json.JsonSerializer.Deserialize<RootObject>(res);
-					if (responsedata.results.Count > 0)
-					{
-						SmartsheetClass st = new SmartsheetClass();
-						List<OpportunityRollupsheet> result = st.GetOpportunityRollupsheet(4614195078555524);
-						foreach (var item in responsedata.results)
-						{
-							foreach (var rollup in result)
-							{
-								if (item.issue.id == rollup.IssueId)
-								{
-									st.AddTempoSheetDetail(item, rollup.TimeTrackingSheetID);
-								}
-							}
-						}
-					}
 					return responsedata;
 				}
 			}
@@ -151,10 +136,9 @@ namespace TimeTrackingAutomation.Process
 				throw ex;
 			}
 		}
-		public RootObject Getworklog()
+		public RootObject Getworklog(string fromdate, string todate)
 		{
-			string fromdate = Convert.ToString(ConfigurationManager.AppSettings["Fromdate"]);
-			string todate = Convert.ToString(ConfigurationManager.AppSettings["Todate"]);
+			
 			string query = "https://api.tempo.io/core/3/worklogs"+"?from=" + fromdate + "&to=" + todate + "";
 			try
 			{

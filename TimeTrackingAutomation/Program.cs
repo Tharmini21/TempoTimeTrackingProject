@@ -25,12 +25,12 @@ namespace TimeTrackingAutomation
 			//}
 			Console.WriteLine("Task Schedular Start Process:" + DateTime.Now);
 
-			JiraTempoApi objapi = new JiraTempoApi();
-			Logger.ClearLogFileContents();
-			objapi.Getteams();
-			//SmartsheetClass smartsheet = new SmartsheetClass();
+			//JiraTempoApi objapi = new JiraTempoApi();
 			//Logger.ClearLogFileContents();
-			//smartsheet.GetConfigSheetDetail();
+			//objapi.Getteams();
+			SmartsheetClass smartsheet = new SmartsheetClass();
+			Logger.ClearLogFileContents();
+			smartsheet.GetConfigSheetDetail();
 			Console.WriteLine("Task Schedular End Process:" +DateTime.Now);
 			//smartsheet.SaveConfigSheetDetail();
 			Console.ReadLine();
