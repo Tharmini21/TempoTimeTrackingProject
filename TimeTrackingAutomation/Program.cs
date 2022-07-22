@@ -13,18 +13,7 @@ namespace TimeTrackingAutomation
 
 		public static void Main(string[] args)
 		{
-			//string ProgramTitle = System.Diagnostics.Process.GetCurrentProcess().MainWindowTitle;
-			//System.Diagnostics.Process[] Processes = System.Diagnostics.Process.GetProcesses();
-
-			//for (int i = 0; i < Processes.Length; i++)
-			//{
-			//	if (Processes[i].MainWindowTitle == ProgramTitle)
-			//	{
-			//		Processes[i].CloseMainWindow();
-			//	}
-			//}
 			Console.WriteLine("Task Schedular Start Process:" + DateTime.Now);
-
 			//JiraTempoApi objapi = new JiraTempoApi();
 			//Logger.ClearLogFileContents();
 			//objapi.Getteams();
@@ -32,21 +21,7 @@ namespace TimeTrackingAutomation
 			Logger.ClearLogFileContents();
 			smartsheet.GetConfigSheetDetail();
 			Console.WriteLine("Task Schedular End Process:" +DateTime.Now);
-			//smartsheet.SaveConfigSheetDetail();
 			Console.ReadLine();
 		}
-		//public void CloseDuplicateApplications()
-		//{
-		//	string ProgramTitle = System.Diagnostics.Process.GetCurrentProcess().MainWindowTitle;
-		//	System.Diagnostics.Process[] Processes = System.Diagnostics.Process.GetProcesses();
-
-		//	for (int i = 0; i < Processes.Length; i++)
-		//	{
-		//		if (Processes[i].MainWindowTitle == ProgramTitle)
-		//		{
-		//			Processes[i].CloseMainWindow();
-		//		}
-		//	}
-		//}
 	}
 }

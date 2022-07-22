@@ -28,7 +28,6 @@ namespace TimeTrackingAutomation.Process
 		private const string CONFIGURATION_VALUE2_COLUMN = "LastRun";
 		private const string PROCESS = "Smartsheet Api Process";
 		public static string RollupSheetsIds = "OpportunityRollupsheetId";
-
 		private const string CONFIGURATION_SECTION = "OpportunityRollupsheetId";
 		private const string CONFIG_CONFIGURATION_SHEET_ID = "CONFIGURATION_SHEET_ID";
 
@@ -39,6 +38,7 @@ namespace TimeTrackingAutomation.Process
 			ConfigSheet configsheet = null;
 			try
 			{
+				Logger.LogToConsole("Fetching Configuration sheet");
 				long sheetid = Convert.ToInt64(ConfigurationManager.AppSettings["JiraTempoConfigsheet"]);
 				var sheetdata = Client.GetSheet(sheetid);
 				foreach (Row tmpRow in sheetdata.Rows)
@@ -64,7 +64,7 @@ namespace TimeTrackingAutomation.Process
 						}
 					}
 				}
-				return result;
+				
 			}
 			catch (Exception ex)
 			{
@@ -72,21 +72,23 @@ namespace TimeTrackingAutomation.Process
 				var message = $"Unable to get configuration sheet due to exception: {ex.Message}";
 				throw new ApplicationException(message, ex);
 			}
+			Logger.LogToConsole("Configuration sheet initialized");
+			return result;
 		}
 
 		public List<OpportunityRollupsheet> GetOpportunityRollupsheet(dynamic rollupsheetid, List<ConfigSheet> configdata)
 		{
+			List<OpportunityRollupsheet> result = new List<OpportunityRollupsheet>();
+			OpportunityRollupsheet Data = null;
+			long TempoBulkSheetID = 0;
+			string LastRunDate = string.Empty;
+			string fromdate = string.Empty;
+			string todate = string.Empty;
 			try
 			{
+				Logger.LogToConsole($"Caching list of record from rollup sheets");
 				long sheetid = Convert.ToInt64(rollupsheetid);
 				Sheet sheet = Client.GetSheet(sheetid);
-				Console.WriteLine("Loaded " + sheet.Rows.Count + " rows from sheet: " + sheet.Name);
-				List<OpportunityRollupsheet> result = new List<OpportunityRollupsheet>();
-				OpportunityRollupsheet Data = null;
-				long TempoBulkSheetID = 0;
-				string LastRunDate = string.Empty;
-				string fromdate = string.Empty;
-				string todate = string.Empty;
 				foreach (Row tmpRow in sheet.Rows)
 				{
 					foreach (Cell tmpCell in tmpRow.Cells)
@@ -131,36 +133,42 @@ namespace TimeTrackingAutomation.Process
 					{
 						char[] spearator = { ' ' };
 						string[] datearry = LastRunDate.Split(spearator);
-						DateTime dt = new DateTime();
-						dt = Convert.ToDateTime(datearry[0]);
-						fromdate = Convert.ToString(dt);
-						todate = Convert.ToString(DateTime.Now.ToShortDateString());
-
-
+						string DateString = datearry[0];
+						IFormatProvider culture = new CultureInfo("en-US", true);
+						string startdate = DateTime.ParseExact(DateString, "MM/dd/yyyy", CultureInfo.InvariantCulture).ToString("yyyy-MM-dd");
+						fromdate = startdate;
+						todate = DateTime.Now.ToString("yyyy-MM-dd");
+						//fromdate >= LastRunDate;
+						//todate <= todate;
 					}
+					
 					//fromdate = Convert.ToString(ConfigurationManager.AppSettings["Fromdate"]);
 					//todate = Convert.ToString(ConfigurationManager.AppSettings["Todate"]);
 					RootObject data = objapi.Getworklog(fromdate,todate);
-					//char[] spearator = { '-' };
-					//string[] projectkeyarray = item.issue.key.Split(spearator);
-					foreach (var item in data.results)
+					if (data.results != null)
 					{
-						foreach (var rollup in result)
+						foreach (var item in data.results)
 						{
-							
-							if (item.issue.key == rollup.IssueKey)
+							foreach (var rollup in result)
 							{
-								AddTempoSheetDetail(item, rollup.TimeTrackingSheetID);
-							}
-							else if (result.Where(x => x.IssueKey.Contains(item.issue.key)).Any()==false)
-							{
-								AddTempoSheetDetail(item, TempoBulkSheetID);
-								break;
+
+								if (item.issue.key == rollup.IssueKey)
+								{
+									AddTempoSheetDetail(item, rollup.TimeTrackingSheetID);
+								}
+								else if (result.Where(x => x.IssueKey.Contains(item.issue.key)).Any() == false)
+								{
+									AddTempoSheetDetail(item, TempoBulkSheetID);
+									break;
+								}
 							}
 						}
 					}
+					else {
+						Logger.LogToConsole("Unable to get worklog data.");
+					}
 				}
-				return result;
+				
 			}
 			catch (Exception ex)
 			{
@@ -168,6 +176,8 @@ namespace TimeTrackingAutomation.Process
 				var message = $"Unable to get rollup sheet data due to exception: {ex.Message}";
 				throw new ApplicationException(message, ex);
 			}
+			Logger.LogToConsole($"Cached {result.Count} record from Opportunity rollup sheets");
+			return result;
 		}
 		public object AddTempoSheetDetail(WorklogModel tm, long configsheetid)
 		{

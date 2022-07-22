@@ -18,12 +18,41 @@ namespace TimeTrackingAutomation.Utilities
 			System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
 		//private static Sheet ErrorSheet;
 		private static string Process;
-		private static Sheet RunLogSheet;
 		private static SmartsheetClient Client;
-		
+		private static readonly object Locker = new object();
 		public static void LogToConsole(string message)
 		{
 			Console.WriteLine($"{DateTime.Now.ToString(CultureInfo.CurrentCulture)}: {message}");
+			LogWrite(message);
+		}
+		private static void Log(string logMessage, TextWriter txtWriter)
+		{
+			try
+			{
+				txtWriter.Write($"\r\n {DateTime.Now.ToString(CultureInfo.CurrentCulture)} : ");
+				txtWriter.WriteLine("  :{0}", " " + logMessage);
+			}
+			catch (Exception ex)
+			{
+				LogWrite(ex.StackTrace);
+			}
+		}
+		private static void LogWrite(string logMessage)
+		{
+			lock (Locker)
+			{
+				try
+				{
+					using (var writer = File.AppendText(GetRunLogFile()))
+					{
+						Log(logMessage, writer);
+					}
+				}
+				catch (Exception ex)
+				{
+					Console.Write(ex.Message);
+				}
+			}
 		}
 		private static string GetRunLogFile()
 		{

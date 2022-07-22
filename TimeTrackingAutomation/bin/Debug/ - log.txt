@@ -1,0 +1,24 @@
+
+ 22-07-2022 22:22:30 :   : Fetching Configuration sheet
+
+ 22-07-2022 22:22:33 :   : Caching list of record from rollup sheets
+
+ 22-07-2022 22:22:41 :   : Fetching Bulk Worklog Data.
+
+ 22-07-2022 22:22:44 :   : Cached 2 record from worklog from Tempo api Call.
+
+ 22-07-2022 22:22:44 :   : Start Smartsheet Api Process
+
+ 22-07-2022 22:22:45 :   : Adding RowsImported count 1 rows
+
+ 22-07-2022 22:22:45 :   : Smartsheet Api Process complete
+
+ 22-07-2022 22:22:46 :   : Start Smartsheet Api Process
+
+ 22-07-2022 22:22:48 :   : Adding RowsImported count 2 rows
+
+ 22-07-2022 22:22:48 :   : Smartsheet Api Process complete
+
+ 22-07-2022 22:22:49 :   : Cached 8 record from Opportunity rollup sheets
+
+ 22-07-2022 22:22:49 :   : Configuration sheet initialized

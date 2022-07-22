@@ -138,8 +138,10 @@ namespace TimeTrackingAutomation.Process
 		}
 		public RootObject Getworklog(string fromdate, string todate)
 		{
-			
+
+			Logger.LogToConsole("Fetching Bulk Worklog Data.");
 			string query = "https://api.tempo.io/core/3/worklogs"+"?from=" + fromdate + "&to=" + todate + "";
+			RootObject data = null;
 			try
 			{
 				{
@@ -149,23 +151,8 @@ namespace TimeTrackingAutomation.Process
 					request.Headers.Add("Authorization", "Bearer " + token);
 					HttpResponseMessage response = Client.SendAsync(request).Result;
 					string res = response.Content.ReadAsStringAsync().Result;
-					RootObject data = System.Text.Json.JsonSerializer.Deserialize<RootObject>(res);
-					//if (data.results.Count > 0)
-					//{
-					//	SmartsheetClass st = new SmartsheetClass();
-					//	List<OpportunityRollupsheet> result = st.GetOpportunityRollupsheet(4614195078555524);
-					//	foreach (var item in data.results)
-					//	{
-					//		foreach (var rollup in result)
-					//		{
-					//			if (item.issue.key == rollup.IssueKey)
-					//			{
-					//				st.AddTempoSheetDetail(item, rollup.TimeTrackingSheetID);
-					//			}
-					//		}
-					//	}
-					//}
-					return data;
+					data = System.Text.Json.JsonSerializer.Deserialize<RootObject>(res);
+					
 				}
 			}
 			catch (Exception ex)
@@ -173,6 +160,8 @@ namespace TimeTrackingAutomation.Process
 				Logger.LogToConsole(ex.Message);
 				throw ex;
 			}
+			Logger.LogToConsole($"Cached {data.results?.Count} record from worklog from Tempo api Call.");
+			return data;
 		}
 		public RootObject GetworklogwithissueKey(string issuekey)
 		{
@@ -212,6 +201,32 @@ namespace TimeTrackingAutomation.Process
 					string res = response.Content.ReadAsStringAsync().Result;
 					RootObject data = System.Text.Json.JsonSerializer.Deserialize<RootObject>(res);
 					return data;
+				}
+			}
+			catch (Exception ex)
+			{
+				Logger.LogToConsole(ex.Message);
+				throw ex;
+			}
+		}
+
+		public object GetworklogforRollupsheet()
+		{
+			string query = "https://api.tempo.io/core/3/worklogs";
+			try
+			{
+				{
+					var Client = new HttpClient();
+					string urlStr = query;
+					HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, urlStr);
+					request.Headers.Add("Authorization", "Bearer " + token);
+					HttpResponseMessage response = Client.SendAsync(request).Result;
+					string res = response.Content.ReadAsStringAsync().Result;
+					RootObject data = System.Text.Json.JsonSerializer.Deserialize<RootObject>(res);
+					var rollupdata = data.results.Select(x => new { x.issue.id, x.issue.key }).Distinct();
+					//char[] spearator = { '-' };
+					//string[] projectkeyarray = item.issue.key.Split(spearator);
+					return rollupdata;
 				}
 			}
 			catch (Exception ex)
