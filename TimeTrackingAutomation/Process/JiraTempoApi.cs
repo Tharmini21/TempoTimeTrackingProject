@@ -152,7 +152,17 @@ namespace TimeTrackingAutomation.Process
 					HttpResponseMessage response = Client.SendAsync(request).Result;
 					string res = response.Content.ReadAsStringAsync().Result;
 					data = System.Text.Json.JsonSerializer.Deserialize<RootObject>(res);
-					
+					if (data.results.Count > 0)
+					{
+						char[] spearator = { '-' };
+						//string[] projectkeyarray = item.issue.key.Split(spearator);
+						var rollupdata = data.results.Select(x => new { x.issue.id, x.issue.key, ProjectID = x.issue.key.Split(spearator).First(), x.author.accountId, x.author.displayName, x.startDate }).Distinct();
+						//Project ID and TaskID, Author, Start Date
+
+						//return rollupdata;
+						//var jsonTask = response.Content.ReadAsAsync<JsonObject>();
+						//var jsonObject = jsonTask.Result;
+					}
 				}
 			}
 			catch (Exception ex)

@@ -70,7 +70,7 @@ namespace TimeTrackingAutomation.Process
 			{
 				Logger.LogToConsole(ex.Message);
 				var message = $"Unable to get configuration sheet due to exception: {ex.Message}";
-				throw new ApplicationException(message, ex);
+				//throw new ApplicationException(message, ex);
 			}
 			Logger.LogToConsole("Configuration sheet initialized");
 			return result;
@@ -136,7 +136,8 @@ namespace TimeTrackingAutomation.Process
 						string DateString = datearry[0];
 						IFormatProvider culture = new CultureInfo("en-US", true);
 						string startdate = DateTime.ParseExact(DateString, "MM/dd/yyyy", CultureInfo.InvariantCulture).ToString("yyyy-MM-dd");
-						fromdate = startdate;
+						//fromdate = startdate;
+						fromdate = "2022-07-21";
 						todate = DateTime.Now.ToString("yyyy-MM-dd");
 						//fromdate >= LastRunDate;
 						//todate <= todate;

@@ -16,7 +16,7 @@ namespace TimeTrackingAutomation.Utilities
 	{
 		private static readonly string AssemblyPath =
 			System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-		//private static Sheet ErrorSheet;
+		private static Sheet ErrorSheet;
 		private static string Process;
 		private static SmartsheetClient Client;
 		private static readonly object Locker = new object();
@@ -56,7 +56,7 @@ namespace TimeTrackingAutomation.Utilities
 		}
 		private static string GetRunLogFile()
 		{
-			return Path.Combine(AssemblyPath, $"{Process} - log.txt");
+			return Path.Combine(AssemblyPath, "log.txt");
 		}
 
 		public static void ClearLogFileContents()
@@ -68,6 +68,50 @@ namespace TimeTrackingAutomation.Utilities
 			Client = client;
 			Process = automation.GetType().Name;
 		}
+		public static void LogException(Exception e, string message = "")
+		{
+			var rows = new List<Row>()
+			{
+				new Row
+				{
+					Cells = new List<Cell>()
+					{
+						new Cell()
+						{
+							Value = e?.Message ?? string.Empty,
+							ColumnId = ErrorSheet.GetColumnByTitle("Exception")?.Id
+						},
+						new Cell()
+						{
+							Value = e?.InnerException?.Message ?? string.Empty,
+							ColumnId = ErrorSheet.GetColumnByTitle("Inner Exception")?.Id
+						},
+						new Cell()
+						{
+							Value = message,
+							ColumnId = ErrorSheet.GetColumnByTitle("Message")?.Id
+						},
+						new Cell()
+						{
+							Value = e?.Source ?? string.Empty,
+							ColumnId = ErrorSheet.GetColumnByTitle("Source")?.Id
+						},
+						new Cell()
+						{
+							Value = e?.StackTrace ?? string.Empty,
+							ColumnId = ErrorSheet.GetColumnByTitle("Stack Trace")?.Id
+						}
+					}
+				}
+			};
 
+			if (ErrorSheet?.TotalRowCount >= 3500)
+			{
+				var rowsToDelete = ErrorSheet.Rows.Take(100).ToList().Select(x => (long)x.Id).ToList();
+				Client.SheetResources.RowResources.DeleteRows((long)ErrorSheet.Id, rowsToDelete, true);
+			}
+
+			Client.SheetResources.RowResources.AddRows((long)ErrorSheet.Id, rows);
+		}
 	}
 }

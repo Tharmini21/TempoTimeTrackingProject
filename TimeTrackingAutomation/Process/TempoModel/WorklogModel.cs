@@ -12,6 +12,8 @@ namespace TimeTrackingAutomation.Process.TempoModel
 		public int jiraWorklogId { get; set; }
 		public int timeSpentSeconds { get; set; }
 		public int billableSeconds { get; set; }
+		public DateTime startDate { get; set; }
+		//public DateTime startTime { get; set; }
 		public string description { get; set; }
 		public DateTime createdAt { get; set; }
 		public DateTime updatedAt { get; set; }
