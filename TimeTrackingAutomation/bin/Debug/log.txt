@@ -1,6 +1,102 @@
 
- 25-07-2022 23:20:06 :   : Fetching Configuration sheet
+ 26-07-2022 22:48:27 :   : Fetching Configuration sheet
 
- 25-07-2022 23:20:09 :   : Caching list of record from rollup sheets
+ 26-07-2022 22:48:30 :   : Caching list of record from rollup sheets
 
- 25-07-2022 23:20:35 :   : Fetching Bulk Worklog Data.
+ 26-07-2022 22:48:30 :   : Fetching Bulk Worklog Data.
+
+ 26-07-2022 22:48:32 :   : Cached 15 record from worklog from Tempo api Call.
+
+ 26-07-2022 22:48:32 :   : Start Smartsheet Api Process
+
+ 26-07-2022 22:48:33 :   : Adding RowsImported count 1 rows
+
+ 26-07-2022 22:48:33 :   : Smartsheet Api Process complete
+
+ 26-07-2022 22:48:34 :   : Start Smartsheet Api Process
+
+ 26-07-2022 22:48:36 :   : Adding RowsImported count 2 rows
+
+ 26-07-2022 22:48:36 :   : Smartsheet Api Process complete
+
+ 26-07-2022 22:48:37 :   : Start Smartsheet Api Process
+
+ 26-07-2022 22:48:38 :   : Adding RowsImported count 3 rows
+
+ 26-07-2022 22:48:38 :   : Smartsheet Api Process complete
+
+ 26-07-2022 22:48:39 :   : Start Smartsheet Api Process
+
+ 26-07-2022 22:48:41 :   : Adding RowsImported count 4 rows
+
+ 26-07-2022 22:48:41 :   : Smartsheet Api Process complete
+
+ 26-07-2022 22:48:42 :   : Start Smartsheet Api Process
+
+ 26-07-2022 22:48:43 :   : Adding RowsImported count 5 rows
+
+ 26-07-2022 22:48:43 :   : Smartsheet Api Process complete
+
+ 26-07-2022 22:48:44 :   : Start Smartsheet Api Process
+
+ 26-07-2022 22:48:46 :   : Adding RowsImported count 6 rows
+
+ 26-07-2022 22:48:46 :   : Smartsheet Api Process complete
+
+ 26-07-2022 22:48:47 :   : Start Smartsheet Api Process
+
+ 26-07-2022 22:48:48 :   : Adding RowsImported count 7 rows
+
+ 26-07-2022 22:48:48 :   : Smartsheet Api Process complete
+
+ 26-07-2022 22:48:49 :   : Start Smartsheet Api Process
+
+ 26-07-2022 22:48:51 :   : Adding RowsImported count 8 rows
+
+ 26-07-2022 22:48:51 :   : Smartsheet Api Process complete
+
+ 26-07-2022 22:48:52 :   : Start Smartsheet Api Process
+
+ 26-07-2022 22:48:53 :   : Adding RowsImported count 9 rows
+
+ 26-07-2022 22:48:53 :   : Smartsheet Api Process complete
+
+ 26-07-2022 22:48:54 :   : Start Smartsheet Api Process
+
+ 26-07-2022 22:48:56 :   : Adding RowsImported count 10 rows
+
+ 26-07-2022 22:48:56 :   : Smartsheet Api Process complete
+
+ 26-07-2022 22:48:57 :   : Start Smartsheet Api Process
+
+ 26-07-2022 22:48:58 :   : Adding RowsImported count 11 rows
+
+ 26-07-2022 22:48:58 :   : Smartsheet Api Process complete
+
+ 26-07-2022 22:48:59 :   : Start Smartsheet Api Process
+
+ 26-07-2022 22:49:00 :   : Adding RowsImported count 12 rows
+
+ 26-07-2022 22:49:00 :   : Smartsheet Api Process complete
+
+ 26-07-2022 22:49:01 :   : Start Smartsheet Api Process
+
+ 26-07-2022 22:49:02 :   : Adding RowsImported count 13 rows
+
+ 26-07-2022 22:49:02 :   : Smartsheet Api Process complete
+
+ 26-07-2022 22:49:03 :   : Start Smartsheet Api Process
+
+ 26-07-2022 22:49:04 :   : Adding RowsImported count 14 rows
+
+ 26-07-2022 22:49:04 :   : Smartsheet Api Process complete
+
+ 26-07-2022 22:49:05 :   : Start Smartsheet Api Process
+
+ 26-07-2022 22:49:06 :   : Adding RowsImported count 15 rows
+
+ 26-07-2022 22:49:06 :   : Smartsheet Api Process complete
+
+ 26-07-2022 22:49:07 :   : Cached 3 record from Opportunity rollup sheets
+
+ 26-07-2022 22:49:07 :   : Configuration sheet initialized
