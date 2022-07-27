@@ -32,10 +32,23 @@ namespace TimeTrackingAutomation.Process
 		private const string CONFIG_CONFIGURATION_SHEET_ID = "CONFIGURATION_SHEET_ID";
 
 		private int RowsImported;
-		public List<ConfigSheet> GetConfigSheetDetail()
+
+		private string ProjectId;
+		private string TaskId;
+		private string AuthorId;
+		private string AuthorName;
+		private string StartDate;
+		private string IssueId;
+		private string IssueKey;
+		private string tempoWorklogId;
+		private string timeSpentSeconds;
+		private string billableSeconds;
+		private string description;
+
+		public List<ConfigItem> GetConfigSheetDetail()
 		{
-			List<ConfigSheet> result = new List<ConfigSheet>();
-			ConfigSheet configsheet = null;
+			List<ConfigItem> result = new List<ConfigItem>();
+			ConfigItem configitem = null;
 			try
 			{
 				Logger.LogToConsole("Fetching Configuration sheet");
@@ -45,14 +58,15 @@ namespace TimeTrackingAutomation.Process
 				{
 					foreach (Cell tmpCell in tmpRow.Cells)
 					{
-						configsheet = new ConfigSheet()
+						configitem = new ConfigItem()
 						{
 							Key = Convert.ToString(tmpRow.Cells[0].Value),
-							Value = (tmpRow.Cells[1].Value),
+							Value1 = (tmpRow.Cells[1].Value),
+							Value2 = (tmpRow.Cells[2].Value),
 						};
 
 					}
-					result.Add(configsheet);
+					result.Add(configitem);
 				}
 				if (result != null)
 				{
@@ -60,7 +74,7 @@ namespace TimeTrackingAutomation.Process
 					{
 						if (item.Key == "RollupSheetID")
 						{
-							GetOpportunityRollupsheet(item.Value, result);
+							GetOpportunityRollupsheet(item.Value1, result);
 						}
 					}
 				}
@@ -76,7 +90,7 @@ namespace TimeTrackingAutomation.Process
 			return result;
 		}
 
-		public List<OpportunityRollupsheet> GetOpportunityRollupsheet(dynamic rollupsheetid, List<ConfigSheet> configdata)
+		public List<OpportunityRollupsheet> GetOpportunityRollupsheet(dynamic rollupsheetid, List<ConfigItem> configdata)
 		{
 			List<OpportunityRollupsheet> result = new List<OpportunityRollupsheet>();
 			OpportunityRollupsheet Data = null;
@@ -110,11 +124,11 @@ namespace TimeTrackingAutomation.Process
 					{
 						if (item.Key == "Last Run TimeStamp")
 						{
-							LastRunDate = Convert.ToString(item.Value);
+							LastRunDate = Convert.ToString(item.Value1);
 						}
 						if (item.Key == "TempoBulkSheetID")
 						{
-							TempoBulkSheetID = Convert.ToInt64(item.Value);
+							TempoBulkSheetID = Convert.ToInt64(item.Value1);
 						}
 					}
 				}
@@ -150,7 +164,7 @@ namespace TimeTrackingAutomation.Process
 					{
 						var rolluplist = new List<OpportunityRollupsheet>();
 						char[] spearator = { '-' };
-						var rollupdata = data.results.Select(x => new { x.issue.id, x.issue.key, ProjectID = x.issue.key.Split(spearator).First(), x.author.accountId, x.author.displayName, x.startDate }).Distinct();
+						var rollupdata = data.results.Select(x => new {ProjectID = x.issue.key.Split(spearator).First()}).Distinct();
 						//var rollupdata = data.results.Select(x => new { x.issue.id, x.issue.key, ProjectID = x.issue.key.Split(spearator).First(), x.author.accountId, x.author.displayName, x.startDate }).Distinct();
 						//Project ID and TaskID, Author, Start Date
 						//SaveRollupSheetDetail(rollupdata, sheetid);
@@ -163,11 +177,11 @@ namespace TimeTrackingAutomation.Process
 							foreach (var rollup in result)
 							{
 
-								if (worklog.issue.key.Split(spearator).First() == rollup.ProjectId)
+								if (worklog.issue.key?.Split(spearator).First() == rollup.ProjectId)
 								{
 									AddTempoSheetDetail(worklog, rollup.TimeTrackingSheetID);
 								}
-								else if (result.Where(x => x.ProjectId.Contains(worklog.issue.key.Split(spearator).First())).Any() == false)
+								else if (result.Where(x => x.ProjectId.Contains(worklog.issue.key?.Split(spearator).First())).Any() == false)
 								{
 									AddTempoSheetDetail(worklog, TempoBulkSheetID);
 									break;
@@ -223,6 +237,7 @@ namespace TimeTrackingAutomation.Process
 			}
 			return status;
 		}
+
 		public object AddTempoSheetDetail(WorklogModel tm, long configsheetid)
 		{
 			Logger.LogToConsole($"Start {PROCESS}");
@@ -238,31 +253,32 @@ namespace TimeTrackingAutomation.Process
 				}
 				else
 				{
-					columnMap.Clear();
-					foreach (Column column in sheet.Columns)
-						columnMap.Add(column.Title, (long)column.Id);
-
-					List<Cell> cells = new List<Cell>();
+					//List<Cell> cells = new List<Cell>();
 					Cell[] cellsA = null;
 					Row rowA = null;
 					char[] spearator = { '-' };
 					string[] ProjectKeyarr = tm.issue.key.Split(spearator);
 					cellsA = new Cell[]
 					{
-					 new Cell.AddCellBuilder(sheet.Columns[0].Id, ProjectKeyarr[0]).Build()
-					,new Cell.AddCellBuilder(sheet.Columns[1].Id, ProjectKeyarr[1]).Build()
-					,new Cell.AddCellBuilder(sheet.Columns[2].Id, tm.author.accountId).Build()
-					,new Cell.AddCellBuilder(sheet.Columns[3].Id, tm.author.displayName).Build()
-					,new Cell.AddCellBuilder(sheet.Columns[4].Id, tm.startDate).Build()
-					,new Cell.AddCellBuilder(sheet.Columns[5].Id, tm.issue.id).Build()
-					,new Cell.AddCellBuilder(sheet.Columns[6].Id, tm.issue.key).Build()
-					,new Cell.AddCellBuilder(sheet.Columns[7].Id, tm.tempoWorklogId).Build()
-					,new Cell.AddCellBuilder(sheet.Columns[8].Id, tm.timeSpentSeconds).Build()
-					,new Cell.AddCellBuilder(sheet.Columns[9].Id, tm.billableSeconds).Build()
-					,new Cell.AddCellBuilder(sheet.Columns[10].Id, tm.description).Build()
+					 new Cell.AddCellBuilder(sheet.GetColumnByTitle("ProjectId")?.Id, ProjectKeyarr[0]).Build()
+					,new Cell.AddCellBuilder(sheet.GetColumnByTitle("TaskId")?.Id, ProjectKeyarr[1]).Build()
+
+
+
+
+					// new Cell.AddCellBuilder(sheet.GetColumnByTitle(ProjectId)?.Id, ProjectKeyarr[0]).Build()
+					//,new Cell.AddCellBuilder(sheet.GetColumnByTitle(TaskId)?.Id, ProjectKeyarr[1]).Build()
+					//,new Cell.AddCellBuilder(sheet.GetColumnByTitle(AuthorId)?.Id, tm.author.accountId).Build()
+					//,new Cell.AddCellBuilder(sheet.GetColumnByTitle(AuthorName)?.Id, tm.author.displayName).Build()
+					//,new Cell.AddCellBuilder(sheet.GetColumnByTitle(StartDate)?.Id, tm.startDate).Build()
+					//,new Cell.AddCellBuilder(sheet.GetColumnByTitle(IssueId)?.Id, tm.issue.id).Build()
+					//,new Cell.AddCellBuilder(sheet.GetColumnByTitle(IssueKey)?.Id, tm.issue.key).Build()
+					//,new Cell.AddCellBuilder(sheet.GetColumnByTitle(tempoWorklogId)?.Id, tm.tempoWorklogId).Build()
+					//,new Cell.AddCellBuilder(sheet.GetColumnByTitle(timeSpentSeconds)?.Id, tm.timeSpentSeconds).Build()
+					//,new Cell.AddCellBuilder(sheet.GetColumnByTitle(billableSeconds)?.Id, tm.billableSeconds).Build()
+					//,new Cell.AddCellBuilder(sheet.GetColumnByTitle(description)?.Id, tm.description).Build()
 
 				};
-					//var rollupdata = data.results.Select(x => new { x.issue.id, x.issue.key, ProjectID = x.issue.key.Split(spearator).First(), x.author.accountId, x.author.displayName, x.startDate }).Distinct();
 
 					rowA = new Row.AddRowBuilder(true, null, null, null, null).SetCells(cellsA).Build();
 					IList<Row> newRows = Client.SheetResources.RowResources.AddRows(sheetid, new Row[] { rowA });

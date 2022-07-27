@@ -92,7 +92,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Configuration\Config.cs" />
     <Compile Include="Configuration\ConfigDictionary.cs" />
+    <Compile Include="Configuration\ConfigItem.cs" />
     <Compile Include="Helpers\RowExtensions.cs" />
     <Compile Include="Helpers\SheetExtensions.cs" />
     <Compile Include="Helpers\SmartsheetClientExtension.cs" />
@@ -104,6 +106,7 @@
     <Compile Include="Process\TempoModel\OpportunityRollupsheet.cs" />
     <Compile Include="Process\TempoModel\ConfigSheet.cs" />
     <Compile Include="Process\TempoModel\TeamModel.cs" />
+    <Compile Include="Process\TempoModel\TimeTrackingSheet.cs" />
     <Compile Include="Process\TempoModel\WorklogModel.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
