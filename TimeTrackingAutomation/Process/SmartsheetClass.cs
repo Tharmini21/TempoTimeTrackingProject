@@ -20,17 +20,13 @@ namespace TimeTrackingAutomation.Process
 	{
 		static Dictionary<string, long> columnMap = new Dictionary<string, long>();
 		static Dictionary<string, long> rowMap = new Dictionary<string, long>();
-		public Dictionary<string, string> RollupSheetIds;
-		protected internal List<ConfigDictionary> ConfigDictionaries { get; private set; }
-		//private const string CONFIGURATION_KEY_COLUMN = "Key";
-		private const string CONFIGURATION_KEY_COLUMN = "ProjectSheetID";
-		private const string CONFIGURATION_VALUE1_COLUMN = "Value";
-		private const string CONFIGURATION_VALUE2_COLUMN = "LastRun";
+		public Dictionary<string, string> SmartsheetColumnMapping;
+		private const string CONFIGURATION_KEY_COLUMN = "Key";
+		private const string CONFIGURATION_VALUE1_COLUMN = "Value1";
+		private const string CONFIGURATION_VALUE2_COLUMN = "Value2";
 		private const string PROCESS = "Smartsheet Api Process";
-		public static string RollupSheetsIds = "OpportunityRollupsheetId";
-		private const string CONFIGURATION_SECTION = "OpportunityRollupsheetId";
 		private const string CONFIG_CONFIGURATION_SHEET_ID = "CONFIGURATION_SHEET_ID";
-
+		public static string ReadSheetMapping = "Smartsheet Column Mapping";
 		private int RowsImported;
 
 		private string ProjectId;
@@ -68,17 +64,35 @@ namespace TimeTrackingAutomation.Process
 					}
 					result.Add(configitem);
 				}
+
+				var config = new Config();
+				
 				if (result != null)
 				{
 					foreach (var item in result)
 					{
+						if (item.Key == "Dictionaries")
+						{
+							//var sheetReadValue = config.GetConfigDictionary("Dictionaries")?.Values;
+							SmartsheetColumnMapping = result?.Select(x => new
+							{
+								key = (string)x.Value1,
+								value = (string)x.Value2
+							}).ToDictionary(kvp => kvp.key, kvp => kvp.value);
+						}
 						if (item.Key == "RollupSheetID")
 						{
 							GetOpportunityRollupsheet(item.Value1, result);
 						}
+						
 					}
 				}
-
+				//LogRun();
+				Logger.LogToConsole($"{PROCESS} complete");
+				var startTime = StartTime.ToString(CultureInfo.InvariantCulture);
+				var endTime = DateTime.Now.ToString(CultureInfo.InvariantCulture);
+				var notes = $"{PROCESS} complete. rows imported: {RowsImported}";
+				//LogJobRun(startTime, endTime, notes, true, sheetdata);
 			}
 			catch (Exception ex)
 			{
@@ -86,7 +100,6 @@ namespace TimeTrackingAutomation.Process
 				var message = $"Unable to get configuration sheet due to exception: {ex.Message}";
 				//throw new ApplicationException(message, ex);
 			}
-			Logger.LogToConsole("Configuration sheet initialized");
 			return result;
 		}
 
@@ -154,12 +167,7 @@ namespace TimeTrackingAutomation.Process
 						//todate <= todate;
 					}
 
-					//fromdate = Convert.ToString(ConfigurationManager.AppSettings["Fromdate"]);
-					//todate = Convert.ToString(ConfigurationManager.AppSettings["Todate"]);
 					RootObject data = objapi.Getworklog(fromdate, todate);
-					
-
-
 					if (data.results.Count > 0)
 					{
 						var rolluplist = new List<OpportunityRollupsheet>();
@@ -260,24 +268,17 @@ namespace TimeTrackingAutomation.Process
 					string[] ProjectKeyarr = tm.issue.key.Split(spearator);
 					cellsA = new Cell[]
 					{
-					 new Cell.AddCellBuilder(sheet.GetColumnByTitle("ProjectId")?.Id, ProjectKeyarr[0]).Build()
-					,new Cell.AddCellBuilder(sheet.GetColumnByTitle("TaskId")?.Id, ProjectKeyarr[1]).Build()
-
-
-
-
-					// new Cell.AddCellBuilder(sheet.GetColumnByTitle(ProjectId)?.Id, ProjectKeyarr[0]).Build()
-					//,new Cell.AddCellBuilder(sheet.GetColumnByTitle(TaskId)?.Id, ProjectKeyarr[1]).Build()
-					//,new Cell.AddCellBuilder(sheet.GetColumnByTitle(AuthorId)?.Id, tm.author.accountId).Build()
-					//,new Cell.AddCellBuilder(sheet.GetColumnByTitle(AuthorName)?.Id, tm.author.displayName).Build()
-					//,new Cell.AddCellBuilder(sheet.GetColumnByTitle(StartDate)?.Id, tm.startDate).Build()
-					//,new Cell.AddCellBuilder(sheet.GetColumnByTitle(IssueId)?.Id, tm.issue.id).Build()
-					//,new Cell.AddCellBuilder(sheet.GetColumnByTitle(IssueKey)?.Id, tm.issue.key).Build()
-					//,new Cell.AddCellBuilder(sheet.GetColumnByTitle(tempoWorklogId)?.Id, tm.tempoWorklogId).Build()
-					//,new Cell.AddCellBuilder(sheet.GetColumnByTitle(timeSpentSeconds)?.Id, tm.timeSpentSeconds).Build()
-					//,new Cell.AddCellBuilder(sheet.GetColumnByTitle(billableSeconds)?.Id, tm.billableSeconds).Build()
-					//,new Cell.AddCellBuilder(sheet.GetColumnByTitle(description)?.Id, tm.description).Build()
-
+					 new Cell.AddCellBuilder(sheet.GetColumnByTitle("Project Id")?.Id, ProjectKeyarr[0]).Build()
+					,new Cell.AddCellBuilder(sheet.GetColumnByTitle("Task Id")?.Id, ProjectKeyarr[1]).Build()
+					,new Cell.AddCellBuilder(sheet.GetColumnByTitle("Author Id")?.Id, tm.author.accountId).Build()
+					,new Cell.AddCellBuilder(sheet.GetColumnByTitle("Author Name")?.Id, tm.author.displayName).Build()
+					,new Cell.AddCellBuilder(sheet.GetColumnByTitle("Start Date")?.Id, tm.startDate).Build()
+					,new Cell.AddCellBuilder(sheet.GetColumnByTitle("Issue Id")?.Id, tm.issue.id).Build()
+					,new Cell.AddCellBuilder(sheet.GetColumnByTitle("Issue Key")?.Id, tm.issue.key).Build()
+					,new Cell.AddCellBuilder(sheet.GetColumnByTitle("Tempo Worklog Id")?.Id, tm.tempoWorklogId).Build()
+					,new Cell.AddCellBuilder(sheet.GetColumnByTitle("TimeSpent Seconds")?.Id, tm.timeSpentSeconds).Build()
+					,new Cell.AddCellBuilder(sheet.GetColumnByTitle("Billable Seconds")?.Id, tm.billableSeconds).Build()
+					,new Cell.AddCellBuilder(sheet.GetColumnByTitle("Description")?.Id, tm.description).Build()
 				};
 
 					rowA = new Row.AddRowBuilder(true, null, null, null, null).SetCells(cellsA).Build();
@@ -287,137 +288,145 @@ namespace TimeTrackingAutomation.Process
 					Logger.LogToConsole($"Adding RowsImported count {RowsImported} rows");
 					status = "Data inserted Successfully";
 				}
-				LogRun();
+				
 			}
 			catch (Exception ex)
 			{
 				Logger.LogToConsole(ex.Message);
-				LogJobRun(StartTime.ToString(CultureInfo.InvariantCulture),
-				   DateTime.Now.ToString(CultureInfo.InvariantCulture), $"{PROCESS} failed.", false);
+				//LogJobRun(StartTime.ToString(CultureInfo.InvariantCulture),
+				//   DateTime.Now.ToString(CultureInfo.InvariantCulture), $"{PROCESS} failed.", false);
 			}
 			return status;
 
 		}
-		private void LogRun()
+		//private void LogRun()
+		//{
+		//	Logger.LogToConsole($"{PROCESS} complete");
+		//	var startTime = StartTime.ToString(CultureInfo.InvariantCulture);
+		//	var endTime = DateTime.Now.ToString(CultureInfo.InvariantCulture);
+		//	var notes = $"{PROCESS} complete. rows imported: {RowsImported}";
+		//	LogJobRun(startTime, endTime, notes, true);
+		//}
+		public void LogJobRun(string startTime, string finishTime, string notes, bool failed,Sheet sheetdata)
 		{
-			Logger.LogToConsole($"{PROCESS} complete");
-			var startTime = StartTime.ToString(CultureInfo.InvariantCulture);
-			var endTime = DateTime.Now.ToString(CultureInfo.InvariantCulture);
-			var notes = $"{PROCESS} complete. rows imported: {RowsImported}";
-			LogJobRun(startTime, endTime, notes, true);
-		}
-		public void LogJobRun(string startTime, string finishTime, string notes, bool failed)
-		{
-			long sheetid = Convert.ToInt64(ConfigurationManager.AppSettings["JiraTempoConfigsheet"]);
-			Sheet RunLogSheet = Client.GetSheet(sheetid);
+			//long sheetid = Convert.ToInt64(ConfigurationManager.AppSettings["JiraTempoConfigsheet"]);
+			//Sheet RunLogSheet = Client.GetSheet(sheetid);
+			Sheet RunLogSheet = sheetdata;
 			var rowsToUpdate = new List<Row>();
 
+			//var rows = RunLogSheet.Rows;
+			//var rowdata = rows.Where(x => x.GetCellForColumn(RunLogSheet, "Last Run TimeStamp")?.Value != null).Select(x)
+			//RunLogSheet.Rows.Where(x=>x.Cells.Contains())
+			//result.Where(x => x.ProjectId.Contains(worklog.issue.key?.Split(spearator).First())).Any() == false)
+			//foreach (Row row in RunLogSheet.Rows)
+			//{
+			//	//(query.Any(c => c.country.Equals("England")))
+			//	//if (row.Cells.Any(x => x.Value.Equals("Last Run TimeStamp"))==true)
+			//	if (row.Cells.Any(x => x.Value.Equals("Last Run TimeStamp")))
+			//	{
+			//		rowsToUpdate.Add(new Row
+			//		{
+			//			Id = row.Id,
+			//			Cells = new List<Cell>()
+			//				{
+			//					new Cell()
+			//					{
+			//						ColumnId = RunLogSheet.GetColumnByTitle(CONFIGURATION_VALUE1_COLUMN).Id,
+			//						Value = finishTime
+			//					}
+			//				}
+			//		});
+			//	}
+			//}
 			rowMap.Clear();
 			foreach (Row row in RunLogSheet.Rows)
 			{
 				rowMap.Add((string)row.Cells[0].Value, (long)row.Id);
 			}
-
-			foreach (KeyValuePair<string, long> tmpRow in rowMap)
+			if (rowMap.Count > 0)
 			{
-				if (tmpRow.Key == "Last Run TimeStamp")
+				foreach (KeyValuePair<string, long> tmpRow in rowMap)
 				{
-					rowsToUpdate.Add(new Row
+					if (tmpRow.Key == "Last Run TimeStamp")
 					{
-						Id = tmpRow.Value,
-						Cells = new List<Cell>()
+						rowsToUpdate.Add(new Row
+						{
+							Id = tmpRow.Value,
+							Cells = new List<Cell>()
 							{
 								new Cell()
 								{
-									ColumnId = RunLogSheet.GetColumnByTitle("Value").Id,
+									ColumnId = RunLogSheet.GetColumnByTitle(CONFIGURATION_VALUE1_COLUMN).Id,
 									Value = finishTime
 								}
 							}
-					});
-				}
-				if (tmpRow.Key == "Last Run Status")
-				{
-					rowsToUpdate.Add(new Row
+						});
+					}
+					if (tmpRow.Key == "Last Run Status")
 					{
-						Id = tmpRow.Value,
-						Cells = new List<Cell>()
+						rowsToUpdate.Add(new Row
+						{
+							Id = tmpRow.Value,
+							Cells = new List<Cell>()
 							{
 								new Cell()
 								{
-									ColumnId = RunLogSheet.GetColumnByTitle("Value").Id,
+									ColumnId = RunLogSheet.GetColumnByTitle(CONFIGURATION_VALUE1_COLUMN).Id,
 									Value = failed
 								}
 							}
-					});
-				}
+						});
+					}
 
-				if (tmpRow.Key == "Last Success Time")
-				{
-					rowsToUpdate.Add(new Row
+					if (tmpRow.Key == "Last Success Time")
 					{
-						Id = tmpRow.Value,
-						Cells = new List<Cell>()
+						rowsToUpdate.Add(new Row
+						{
+							Id = tmpRow.Value,
+							Cells = new List<Cell>()
 							{
 								new Cell()
 								{
-									ColumnId = RunLogSheet.GetColumnByTitle("Value").Id,
+									ColumnId = RunLogSheet.GetColumnByTitle(CONFIGURATION_VALUE1_COLUMN).Id,
 									Value = finishTime
 								}
 							}
-					});
-				}
-				if (failed == false && tmpRow.Key == "Last Error Time")
-				{
-					rowsToUpdate.Add(new Row
+						});
+					}
+					if (failed == false && tmpRow.Key == "Last Error Time")
 					{
-						Id = tmpRow.Value,
-						Cells = new List<Cell>()
+						rowsToUpdate.Add(new Row
+						{
+							Id = tmpRow.Value,
+							Cells = new List<Cell>()
 							{
 								new Cell()
 								{
-									ColumnId = RunLogSheet.GetColumnByTitle("Value").Id,
+									ColumnId = RunLogSheet.GetColumnByTitle(CONFIGURATION_VALUE1_COLUMN).Id,
 									Value = finishTime
 								}
 							}
-					});
-				}
-				if (tmpRow.Key == "Run Notes")
-				{
-					rowsToUpdate.Add(new Row
+						});
+					}
+					if (tmpRow.Key == "Run Notes")
 					{
-						Id = tmpRow.Value,
-						Cells = new List<Cell>()
+						rowsToUpdate.Add(new Row
+						{
+							Id = tmpRow.Value,
+							Cells = new List<Cell>()
 							{
 								new Cell()
 								{
-									ColumnId = RunLogSheet.GetColumnByTitle("Value").Id,
+									ColumnId = RunLogSheet.GetColumnByTitle(CONFIGURATION_VALUE1_COLUMN).Id,
 									Value = notes
 								}
 							}
-					});
+						});
+					}
 				}
 			}
-			IList<Row> updatedRow = Client.SheetResources.RowResources.UpdateRows(sheetid, rowsToUpdate);
-		}
-		private ConfigDictionary GetConfigDictionary(string key, Sheet ConfigSheet)
-		{
-			var rows = ConfigSheet.Rows;
-			var row = rows.Where(x => x.GetCellForColumn(ConfigSheet, CONFIGURATION_KEY_COLUMN)?.Value != null)
-				.FirstOrDefault(x => x.GetCellForColumn(ConfigSheet, CONFIGURATION_KEY_COLUMN)?.Value.Equals(key) ??
-					throw new ConfigurationErrorsException(
-						$"No configuration found for {key}. Please check configuration."));
-
-			return new ConfigDictionary()
-			{
-				Key = key,
-				//Values = rows.Where(r => r.ParentId == row?.Id)
-				Values = rows
-					.Select(r => new
-					{
-						key = r.GetCellForColumn(ConfigSheet, CONFIGURATION_KEY_COLUMN)?.Value,
-						value = r.GetCellForColumn(ConfigSheet, CONFIGURATION_VALUE1_COLUMN)?.Value
-					}).ToDictionary(kvp => kvp.key, kvp => kvp.value)
-			};
+			//IList<Row> updatedRow = Client.SheetResources.RowResources.UpdateRows(sheetid, rowsToUpdate);
+			IList<Row> updatedRow = Client.SheetResources.RowResources.UpdateRows((long)sheetdata.Id, rowsToUpdate);
 		}
 	}
 }

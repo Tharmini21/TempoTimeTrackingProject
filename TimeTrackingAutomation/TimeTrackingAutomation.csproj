@@ -95,6 +95,7 @@
     <Compile Include="Configuration\Config.cs" />
     <Compile Include="Configuration\ConfigDictionary.cs" />
     <Compile Include="Configuration\ConfigItem.cs" />
+    <Compile Include="Configuration\ConfigManager.cs" />
     <Compile Include="Helpers\RowExtensions.cs" />
     <Compile Include="Helpers\SheetExtensions.cs" />
     <Compile Include="Helpers\SmartsheetClientExtension.cs" />

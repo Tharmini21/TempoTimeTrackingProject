@@ -1,20 +1,4 @@
 
- 27-07-2022 23:28:32 :   : Fetching Configuration sheet
+ 28-07-2022 21:28:40 :   : Fetching Configuration sheet
 
- 27-07-2022 23:28:35 :   : Caching list of record from rollup sheets
-
- 27-07-2022 23:28:36 :   : Fetching Bulk Worklog Data.
-
- 27-07-2022 23:28:39 :   : Cached 15 record from worklog from Tempo api Call.
-
- 27-07-2022 23:28:39 :   : Start Smartsheet Api Process
-
- 27-07-2022 23:28:40 :   : The sheet 'ProjectOneTimeSheet' does not contain a column with the title 'ProjectId'
-
- 27-07-2022 23:28:41 :   : Value cannot be null.
-Parameter name: key
-
- 27-07-2022 23:28:41 :   : Unable to get rollup sheet data due to exception: Value cannot be null.
-Parameter name: key
-
- 27-07-2022 23:28:41 :   : Configuration sheet initialized
+ 28-07-2022 21:28:43 :   : Smartsheet Api Process complete

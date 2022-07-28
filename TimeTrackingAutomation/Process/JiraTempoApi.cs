@@ -214,31 +214,5 @@ namespace TimeTrackingAutomation.Process
 			}
 		}
 
-		public object GetworklogforRollupsheet()
-		{
-			string query = "https://api.tempo.io/core/3/worklogs";
-			try
-			{
-				{
-					var Client = new HttpClient();
-					string urlStr = query;
-					HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, urlStr);
-					request.Headers.Add("Authorization", "Bearer " + token);
-					HttpResponseMessage response = Client.SendAsync(request).Result;
-					string res = response.Content.ReadAsStringAsync().Result;
-					RootObject data = System.Text.Json.JsonSerializer.Deserialize<RootObject>(res);
-					var rollupdata = data.results.Select(x => new { x.issue.id, x.issue.key }).Distinct();
-					//char[] spearator = { '-' };
-					//string[] projectkeyarray = item.issue.key.Split(spearator);
-					return rollupdata;
-				}
-			}
-			catch (Exception ex)
-			{
-				Logger.LogToConsole(ex.Message);
-				throw ex;
-			}
-		}
-
 	}
 }
