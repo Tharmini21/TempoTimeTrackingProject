@@ -1,4 +1,14 @@
 
- 28-07-2022 21:28:40 :   : Fetching Configuration sheet
+ 29-07-2022 23:01:05 :   : Fetching Configuration sheet
 
- 28-07-2022 21:28:43 :   : Smartsheet Api Process complete
+ 29-07-2022 23:01:11 :   : Caching list of record from rollup sheets
+
+ 29-07-2022 23:01:12 :   : Fetching Bulk Worklog Data.
+
+ 29-07-2022 23:01:16 :   : Cached 15 record from worklog from Tempo api Call.
+
+ 29-07-2022 23:01:16 :   : Start Smartsheet Api Process
+
+ 29-07-2022 23:16:50 :   : The sheet 'ProjectOneTimeSheet' does not contain a column with the title 'Start Time'
+
+ 29-07-2022 23:16:50 :   : Start Smartsheet Api Process

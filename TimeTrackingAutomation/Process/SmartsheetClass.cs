@@ -20,7 +20,8 @@ namespace TimeTrackingAutomation.Process
 	{
 		static Dictionary<string, long> columnMap = new Dictionary<string, long>();
 		static Dictionary<string, long> rowMap = new Dictionary<string, long>();
-		public Dictionary<string, string> SmartsheetColumnMapping;
+		//public Dictionary<dynamic, dynamic> SmartsheetColumnMapping = new Dictionary<dynamic, dynamic>();
+		public Dictionary<string, string> SmartsheetColumnMapping = new Dictionary<string, string>();
 		private const string CONFIGURATION_KEY_COLUMN = "Key";
 		private const string CONFIGURATION_VALUE1_COLUMN = "Value1";
 		private const string CONFIGURATION_VALUE2_COLUMN = "Value2";
@@ -28,19 +29,6 @@ namespace TimeTrackingAutomation.Process
 		private const string CONFIG_CONFIGURATION_SHEET_ID = "CONFIGURATION_SHEET_ID";
 		public static string ReadSheetMapping = "Smartsheet Column Mapping";
 		private int RowsImported;
-
-		private string ProjectId;
-		private string TaskId;
-		private string AuthorId;
-		private string AuthorName;
-		private string StartDate;
-		private string IssueId;
-		private string IssueKey;
-		private string tempoWorklogId;
-		private string timeSpentSeconds;
-		private string billableSeconds;
-		private string description;
-
 		public List<ConfigItem> GetConfigSheetDetail()
 		{
 			List<ConfigItem> result = new List<ConfigItem>();
@@ -50,8 +38,35 @@ namespace TimeTrackingAutomation.Process
 				Logger.LogToConsole("Fetching Configuration sheet");
 				long sheetid = Convert.ToInt64(ConfigurationManager.AppSettings["JiraTempoConfigsheet"]);
 				var sheetdata = Client.GetSheet(sheetid);
+				long parentid = 0; string parentname = string.Empty;
+				var config = new Config();
+
 				foreach (Row tmpRow in sheetdata.Rows)
 				{
+					if (tmpRow.ParentId != null && (tmpRow.Cells[0]?.DisplayValue == ReadSheetMapping))
+					{
+						parentid = (long)tmpRow.Id;
+						parentname = tmpRow.Cells[0]?.DisplayValue;
+						Console.WriteLine("ParentId:" + parentid + " ParentName:" + parentname);
+						if (parentid > 0)
+						{
+							List<Row> subitems = sheetdata.Rows.Where(x => x.ParentId == parentid).ToList();
+							if (subitems != null)
+							{
+								SmartsheetColumnMapping.Clear();
+								foreach (Row row in subitems)
+								{
+									SmartsheetColumnMapping.Add((string)row.Cells[1].Value, (string)row.Cells[2].Value);
+								}
+							}
+						//SmartsheetColumnMapping = config.GetConfigDictionary(ReadSheetMapping)?.Values;
+						}
+						//if (tmpRow.ParentId != null)
+						//{
+						//	Console.WriteLine("Row #" + (tmpRow.Cells[0].DisplayValue?.ToString() == null ? tmpRow.Cells[1].DisplayValue.ToString() : tmpRow.Cells[0].DisplayValue.ToString() ) + " (Id=" + tmpRow.Id.ToString() + ") is a child of Row Id " + tmpRow.ParentId.ToString() + "<br/><br/>");
+						//}
+					}
+
 					foreach (Cell tmpCell in tmpRow.Cells)
 					{
 						configitem = new ConfigItem()
@@ -64,22 +79,22 @@ namespace TimeTrackingAutomation.Process
 					}
 					result.Add(configitem);
 				}
-
-				var config = new Config();
+				
 				
 				if (result != null)
 				{
+					
 					foreach (var item in result)
 					{
-						if (item.Key == "Dictionaries")
-						{
-							//var sheetReadValue = config.GetConfigDictionary("Dictionaries")?.Values;
-							SmartsheetColumnMapping = result?.Select(x => new
-							{
-								key = (string)x.Value1,
-								value = (string)x.Value2
-							}).ToDictionary(kvp => kvp.key, kvp => kvp.value);
-						}
+						//if (item.Key == "Dictionaries")
+						//{
+						//	//var sheetReadValue = config.GetConfigDictionary("Dictionaries")?.Values;
+						//	SmartsheetColumnMapping = result?.Select(x => new
+						//	{
+						//		key = (string)x.Value1,
+						//		value = (string)x.Value2
+						//	}).ToDictionary(kvp => kvp.key, kvp => kvp.value);
+						//}
 						if (item.Key == "RollupSheetID")
 						{
 							GetOpportunityRollupsheet(item.Value1, result);
@@ -261,13 +276,51 @@ namespace TimeTrackingAutomation.Process
 				}
 				else
 				{
+					
+
 					//List<Cell> cells = new List<Cell>();
 					Cell[] cellsA = null;
 					Row rowA = null;
 					char[] spearator = { '-' };
 					string[] ProjectKeyarr = tm.issue.key.Split(spearator);
+
+					var cells = new List<Cell>();
+					foreach (var key in SmartsheetColumnMapping)
+					{
+						//var targetColumn = SmartsheetColumnMapping[key];
+						//var columnTitle = targetColumn;
+						var keyValuePairdata = key;
+						var columnTitle = keyValuePairdata.Key;
+					    var columnId = sheet.GetColumnByTitle(columnTitle).Id;
+
+						var value = tm.GetType().GetProperty(keyValuePairdata.Value)?.Name;
+						
+						//GetValue(tm.Equals(keyValuePairdata.Value));
+						//meterReadRow.GetType().GetProperty(key)?.GetValue(meterReadRow)
+						//Select(user => user.Name)
+						//var value = typeof(WorklogModel).GetProperties().First(x => x.Name == keyValuePairdata.Value).GetValue(item);
+						//var value = (from wl in tm where )
+						//.GetProperties().First(x => x.Name == keyValuePairdata.Value).GetValue(item);
+
+						//var value = typeof(UtilityAnalysisItem)
+						//	.GetProperties()
+						//	.First(p => p.Name == key)
+						//	.GetValue(item);
+
+						//if (value == null)
+						//	continue;
+
+						//cells.Add(new Cell
+						//{
+						//	ColumnId = columnId,
+						//	Value = value
+						//});
+						//Project Id
+						//Task Id
+					}
 					cellsA = new Cell[]
 					{
+					 //new Cell.AddCellBuilder(sheet.GetColumnByTitle(SmartsheetColumnMapping.Keys)?.Id, ProjectKeyarr[0]).Build()
 					 new Cell.AddCellBuilder(sheet.GetColumnByTitle("Project Id")?.Id, ProjectKeyarr[0]).Build()
 					,new Cell.AddCellBuilder(sheet.GetColumnByTitle("Task Id")?.Id, ProjectKeyarr[1]).Build()
 					,new Cell.AddCellBuilder(sheet.GetColumnByTitle("Author Id")?.Id, tm.author.accountId).Build()

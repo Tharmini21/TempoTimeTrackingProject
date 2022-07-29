@@ -151,6 +151,8 @@ namespace TimeTrackingAutomation.Process
 					request.Headers.Add("Authorization", "Bearer " + token);
 					HttpResponseMessage response = Client.SendAsync(request).Result;
 					string res = response.Content.ReadAsStringAsync().Result;
+					var jsonObject = Newtonsoft.Json.JsonConvert.DeserializeObject(res);
+					//var s = Newtonsoft.Json.JsonConvert.DeserializeObject(result);
 					data = System.Text.Json.JsonSerializer.Deserialize<RootObject>(res);
 					//if (data.results.Count > 0)
 					//{
