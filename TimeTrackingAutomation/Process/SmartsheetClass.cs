@@ -31,6 +31,7 @@ namespace TimeTrackingAutomation.Process
 		public static string Jobstatus = "JobStatus";
 		private int RowsImported;
 		private int RowsFailedImported;
+		private int TotalRowsfromTimecards;
 		public List<ConfigItem> GetConfigSheetDetail()
 		{
 			List<ConfigItem> result = new List<ConfigItem>();
@@ -54,9 +55,7 @@ namespace TimeTrackingAutomation.Process
 									SmartsheetColumnMapping.Add((string)row.Cells[1].Value, (string)row.Cells[2].Value);
 								}
 							}
-							//SmartsheetColumnMapping = config.GetConfigDictionary(ReadSheetMapping)?.Values;
 					}
-
 					foreach (Cell tmpCell in tmpRow.Cells)
 					{
 						configitem = new ConfigItem()
@@ -74,34 +73,17 @@ namespace TimeTrackingAutomation.Process
 				{
 					foreach (var item in result)
 					{
-						//if (item.Key == "Dictionaries")
-						//{
-						//	//var sheetReadValue = config.GetConfigDictionary("Dictionaries")?.Values;
-						//	SmartsheetColumnMapping = result?.Select(x => new
-						//	{
-						//		key = (string)x.Value1,
-						//		value = (string)x.Value2
-						//	}).ToDictionary(kvp => kvp.key, kvp => kvp.value);
-						//}
 						if (item.Key == "RollupSheetID")
 						{
 							GetOpportunityRollupsheet(item.Value1, result);
 						}
-
 					}
 				}
-				//LogRun();
-				//Logger.LogToConsole($"{PROCESS} complete");
-				//var startTime = StartTime.ToString(CultureInfo.InvariantCulture);
-				//var endTime = DateTime.Now.ToString(CultureInfo.InvariantCulture);
-				//var notes = $"{PROCESS} complete. rows imported: {RowsImported}";
-				////LogJobRun(startTime, endTime, notes, true, sheetdata);
 			}
 			catch (Exception ex)
 			{
 				Logger.LogToConsole(ex.Message);
 				var message = $"Unable to get configuration sheet due to exception: {ex.Message}";
-				//throw new ApplicationException(message, ex);
 			}
 			return result;
 		}
@@ -130,7 +112,6 @@ namespace TimeTrackingAutomation.Process
 							TimeTrackingSheetID = Convert.ToInt64(tmpRow.Cells[2].Value)
 						};
 					}
-
 					result.Add(Data);
 				}
 				if (configdata != null)
@@ -171,23 +152,18 @@ namespace TimeTrackingAutomation.Process
 					}
 
 					RootObject data = objapi.Getworklog(fromdate, todate);
-					if (data.results.Count > 0)
+					if (data.results?.Count > 0)
 					{
+						TotalRowsfromTimecards = data.results.Count;
 						var rolluplist = new List<OpportunityRollupsheet>();
 						char[] spearator = { '-' };
 						var rollupdata = data.results.Select(x => new { ProjectID = x.issue.key.Split(spearator).First() }).Distinct();
 						//var rollupdata = data.results.Select(x => new { x.issue.id, x.issue.key, ProjectID = x.issue.key.Split(spearator).First(), x.author.accountId, x.author.displayName, x.startDate }).Distinct();
-						//Project ID and TaskID, Author, Start Date
 						//SaveRollupSheetDetail(rollupdata, sheetid);
-						//foreach (var rd in rollupdata)
-						//{
-						//	rolluplist.Add(rd);
-						//}
 						foreach (var worklog in data.results)
 						{
 							foreach (var rollup in result)
 							{
-
 								if (worklog.issue.key?.Split(spearator).First() == rollup.ProjectId)
 								{
 									AddTempoSheetDetail(worklog, rollup.TimeTrackingSheetID);
@@ -205,7 +181,6 @@ namespace TimeTrackingAutomation.Process
 						Logger.LogToConsole("Unable to get worklog data.");
 					}
 				}
-
 			}
 			catch (Exception ex)
 			{
@@ -327,9 +302,10 @@ namespace TimeTrackingAutomation.Process
 		private void LogRun()
 		{
 			Logger.LogToConsole($"{PROCESS} complete");
+			RowsFailedImported = TotalRowsfromTimecards - RowsImported;
 			var startTime = StartTime.ToString(CultureInfo.InvariantCulture);
 			var endTime = DateTime.Now.ToString(CultureInfo.InvariantCulture);
-			var notes = $"{PROCESS} complete. rows imported: {RowsImported}";
+			var notes = $"{PROCESS} complete.\n" + "Total rows catched from timecard :"+ TotalRowsfromTimecards +"\n" + "Rows imported:" + RowsImported + "\n" + "Rows Failed to Import:" + RowsFailedImported;
 			LogJobRun(startTime, endTime, notes, true);
 		}
 		public void LogJobRun(string startTime, string finishTime, string notes, bool failed)
@@ -344,6 +320,10 @@ namespace TimeTrackingAutomation.Process
 			else
 			{
 				runstatus = "Failed";
+			}
+			if (RowsFailedImported > 0)
+			{
+				runstatus = "Partially Success";
 			}
 			rowMap.Clear();
 			var rowsToUpdate = new List<Row>();
