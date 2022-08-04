@@ -16,7 +16,7 @@ namespace TimeTrackingAutomation.Helpers
         {
             var column = sheet.Columns.FirstOrDefault(c => String.Equals(c.Title, columnTitle, caseSensitive ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase));
             if (column == null)
-                throw new ArgumentException($"The sheet '{sheet.Name}' does not contain a column with the title '{columnTitle}'");
+                throw new ArgumentException($"The sheet '{sheet.Name}' does not contain a column with the title '{columnTitle}'" + DateTime.Now.ToString());
 
             return column;
         }

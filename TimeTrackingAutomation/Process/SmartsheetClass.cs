@@ -29,9 +29,12 @@ namespace TimeTrackingAutomation.Process
 		private const string CONFIG_CONFIGURATION_SHEET_ID = "CONFIGURATION_SHEET_ID";
 		public static string ReadSheetMapping = "Smartsheet Column Mapping";
 		public static string Jobstatus = "JobStatus";
+		public static string LastRunTime = "Last Run EndTime";
+		public static string TempoBulkSheetId = "TempoBulkSheetID"; 
 		private int RowsImported;
 		private int RowsFailedImported;
 		private int TotalRowsfromTimecards;
+		private string ErrorTime;
 		public List<ConfigItem> GetConfigSheetDetail()
 		{
 			List<ConfigItem> result = new List<ConfigItem>();
@@ -99,6 +102,20 @@ namespace TimeTrackingAutomation.Process
 			try
 			{
 				Logger.LogToConsole($"Caching list of record from rollup sheets");
+				if (configdata != null)
+				{
+					foreach (var item in configdata)
+					{
+						if (item.Key == LastRunTime)
+						{
+							LastRunDate = Convert.ToString(item.Value1);
+						}
+						if (item.Key == TempoBulkSheetId)
+						{
+							TempoBulkSheetID = Convert.ToInt64(item.Value1);
+						}
+					}
+				}
 				long sheetid = Convert.ToInt64(rollupsheetid);
 				Sheet sheet = Client.GetSheet(sheetid);
 				foreach (Row tmpRow in sheet.Rows)
@@ -113,21 +130,6 @@ namespace TimeTrackingAutomation.Process
 						};
 					}
 					result.Add(Data);
-				}
-				if (configdata != null)
-				{
-
-					foreach (var item in configdata)
-					{
-						if (item.Key == "Last Run EndTime")
-						{
-							LastRunDate = Convert.ToString(item.Value1);
-						}
-						if (item.Key == "TempoBulkSheetID")
-						{
-							TempoBulkSheetID = Convert.ToInt64(item.Value1);
-						}
-					}
 				}
 				if (result.Count > 0)
 				{
@@ -150,7 +152,6 @@ namespace TimeTrackingAutomation.Process
 						//fromdate >= LastRunDate;
 						//todate <= todate;
 					}
-
 					RootObject data = objapi.Getworklog(fromdate, todate);
 					if (data.results?.Count > 0)
 					{
@@ -294,8 +295,11 @@ namespace TimeTrackingAutomation.Process
 			catch (Exception ex)
 			{
 				Logger.LogToConsole(ex.Message);
+				RowsFailedImported = TotalRowsfromTimecards - RowsImported;
+				var notes = $"{PROCESS} failed.\n" + "Total rows catched from timecard :" + TotalRowsfromTimecards + "\n" + "Rows imported :" + RowsImported + "\n" + "Rows Failed to Import :" + RowsFailedImported;
+				ErrorTime = DateTime.Now.ToString(CultureInfo.InvariantCulture);
 				LogJobRun(StartTime.ToString(CultureInfo.InvariantCulture),
-				   DateTime.Now.ToString(CultureInfo.InvariantCulture), $"{PROCESS} failed.", false);
+				   DateTime.Now.ToString(CultureInfo.InvariantCulture),ErrorTime, notes, false);
 			}
 			return status;
 		}
@@ -306,9 +310,9 @@ namespace TimeTrackingAutomation.Process
 			var startTime = StartTime.ToString(CultureInfo.InvariantCulture);
 			var endTime = DateTime.Now.ToString(CultureInfo.InvariantCulture);
 			var notes = $"{PROCESS} complete.\n" + "Total rows catched from timecard :"+ TotalRowsfromTimecards +"\n" + "Rows imported:" + RowsImported + "\n" + "Rows Failed to Import:" + RowsFailedImported;
-			LogJobRun(startTime, endTime, notes, true);
+			LogJobRun(startTime, endTime, ErrorTime, notes, true);
 		}
-		public void LogJobRun(string startTime, string finishTime, string notes, bool failed)
+		public void LogJobRun(string startTime, string finishTime, string ErrorTime, string notes, bool failed)
 		{
 			long sheetid = Convert.ToInt64(ConfigurationManager.AppSettings["JiraTempoConfigsheet"]);
 			Sheet RunLogSheet = Client.GetSheet(sheetid);
@@ -353,9 +357,14 @@ namespace TimeTrackingAutomation.Process
 								new Cell()
 								{
 									ColumnId = RunLogSheet.GetColumnByTitle(CONFIGURATION_VALUE1_COLUMN).Id,
-									Value = (tmpRow.Key == "Last Run EndTime" || tmpRow.Key == "Last Success Time" || tmpRow.Key == "Last Error Time") ? finishTime : 
-									(tmpRow.Key == "Last Run StartTime") ? startTime : 
-									(tmpRow.Key == "Run Notes") ? notes : 
+									//Value = (tmpRow.Key == "Last Run EndTime" || tmpRow.Key == "Last Success Time" || tmpRow.Key == "Last Error Time") ? finishTime : 
+									//(tmpRow.Key == "Last Run StartTime") ? startTime : 
+									//(tmpRow.Key == "Run Notes") ? notes : 
+									//(tmpRow.Key == "Last Run Status") ? runstatus : ""
+									Value = (tmpRow.Key == "Last Run EndTime" || tmpRow.Key == "Last Success Time") ? finishTime :
+									(tmpRow.Key == "Last Run StartTime") ? startTime :
+									(tmpRow.Key == "Last Error Time") ? ErrorTime :
+									(tmpRow.Key == "Run Notes") ? notes :
 									(tmpRow.Key == "Last Run Status") ? runstatus : ""
 								}
 							}
@@ -363,6 +372,19 @@ namespace TimeTrackingAutomation.Process
 				}
 			}
 			IList<Row> updatedRow = Client.SheetResources.RowResources.UpdateRows(sheetid, rowsToUpdate);
+		}
+		public object InitialCheckSmartsheetColumns(List<OpportunityRollupsheet> result)
+		{
+			foreach (var mapvalue in SmartsheetColumnMapping)
+			{
+				var keyValuePairdata = mapvalue;
+				var columnTitle = keyValuePairdata.Key;
+				foreach (var rollup in result)
+				{
+					
+				}
+			}
+				return "";
 		}
 	}
 }

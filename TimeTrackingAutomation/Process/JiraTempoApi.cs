@@ -15,7 +15,7 @@ namespace TimeTrackingAutomation.Process
 	public class JiraTempoApi
 	{
 
-		private const string PROCESS = "Time Api Process";
+		private const string PROCESS = "Tempo Api Process";
 		public string token = ConfigurationManager.AppSettings["TempoAccessToken"];
 
 		public ResultObject Getteams()
@@ -139,7 +139,7 @@ namespace TimeTrackingAutomation.Process
 		public RootObject Getworklog(string fromdate, string todate)
 		{
 
-			Logger.LogToConsole("Fetching Bulk Worklog Data.");
+			Logger.LogToConsole($"Fetching Bulk Worklog Data from {PROCESS}.");
 			string query = "https://api.tempo.io/core/3/worklogs"+"?from=" + fromdate + "&to=" + todate + "";
 			RootObject data = null;
 			try
