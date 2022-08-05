@@ -30,7 +30,7 @@ namespace TimeTrackingAutomation.Process
 		public static string ReadSheetMapping = "Smartsheet Column Mapping";
 		public static string Jobstatus = "JobStatus";
 		public static string LastRunTime = "Last Run EndTime";
-		public static string TempoBulkSheetId = "TempoBulkSheetID"; 
+		public static string TempoBulkSheetId = "TempoBulkSheetID";
 		private int RowsImported;
 		private int RowsFailedImported;
 		private int TotalRowsfromTimecards;
@@ -49,15 +49,15 @@ namespace TimeTrackingAutomation.Process
 				{
 					if (tmpRow.ParentId != null && (tmpRow.Cells[0]?.DisplayValue == ReadSheetMapping))
 					{
-							List<Row> subitems = sheetdata.Rows.Where(x => x.ParentId == tmpRow.Id).ToList();
-							if (subitems != null)
+						List<Row> subitems = sheetdata.Rows.Where(x => x.ParentId == tmpRow.Id).ToList();
+						if (subitems != null)
+						{
+							SmartsheetColumnMapping.Clear();
+							foreach (Row row in subitems)
 							{
-								SmartsheetColumnMapping.Clear();
-								foreach (Row row in subitems)
-								{
-									SmartsheetColumnMapping.Add((string)row.Cells[1].Value, (string)row.Cells[2].Value);
-								}
+								SmartsheetColumnMapping.Add((string)row.Cells[1].Value, (string)row.Cells[2].Value);
 							}
+						}
 					}
 					foreach (Cell tmpCell in tmpRow.Cells)
 					{
@@ -133,6 +133,7 @@ namespace TimeTrackingAutomation.Process
 				}
 				if (result.Count > 0)
 				{
+					InitialCheckSmartsheetColumns(result);
 					JiraTempoApi objapi = new JiraTempoApi();
 					if (string.IsNullOrEmpty(LastRunDate))
 					{
@@ -288,7 +289,8 @@ namespace TimeTrackingAutomation.Process
 					LogRun();
 					status = "Data inserted Successfully";
 				}
-				else {
+				else
+				{
 					return ("Given time card data is null value.");
 				}
 			}
@@ -299,7 +301,7 @@ namespace TimeTrackingAutomation.Process
 				var notes = $"{PROCESS} failed.\n" + "Total rows catched from timecard :" + TotalRowsfromTimecards + "\n" + "Rows imported :" + RowsImported + "\n" + "Rows Failed to Import :" + RowsFailedImported;
 				ErrorTime = DateTime.Now.ToString(CultureInfo.InvariantCulture);
 				LogJobRun(StartTime.ToString(CultureInfo.InvariantCulture),
-				   DateTime.Now.ToString(CultureInfo.InvariantCulture),ErrorTime, notes, false);
+				   DateTime.Now.ToString(CultureInfo.InvariantCulture), ErrorTime, notes, false,"","");
 			}
 			return status;
 		}
@@ -309,10 +311,10 @@ namespace TimeTrackingAutomation.Process
 			RowsFailedImported = TotalRowsfromTimecards - RowsImported;
 			var startTime = StartTime.ToString(CultureInfo.InvariantCulture);
 			var endTime = DateTime.Now.ToString(CultureInfo.InvariantCulture);
-			var notes = $"{PROCESS} complete.\n" + "Total rows catched from timecard :"+ TotalRowsfromTimecards +"\n" + "Rows imported:" + RowsImported + "\n" + "Rows Failed to Import:" + RowsFailedImported;
-			LogJobRun(startTime, endTime, ErrorTime, notes, true);
+			var notes = $"{PROCESS} complete.\n" + "Total rows catched from timecard :" + TotalRowsfromTimecards + "\n" + "Rows imported:" + RowsImported + "\n" + "Rows Failed to Import:" + RowsFailedImported;
+			LogJobRun(startTime, endTime, ErrorTime, notes, true,"","");
 		}
-		public void LogJobRun(string startTime, string finishTime, string ErrorTime, string notes, bool failed)
+		public void LogJobRun(string startTime, string finishTime, string ErrorTime, string notes, bool failed,string initialcheck, string reason)
 		{
 			long sheetid = Convert.ToInt64(ConfigurationManager.AppSettings["JiraTempoConfigsheet"]);
 			Sheet RunLogSheet = Client.GetSheet(sheetid);
@@ -325,7 +327,7 @@ namespace TimeTrackingAutomation.Process
 			{
 				runstatus = "Failed";
 			}
-			if (RowsFailedImported > 0)
+			if (RowsFailedImported > 0 && RowsImported > 0)
 			{
 				runstatus = "Partially Success";
 			}
@@ -365,7 +367,9 @@ namespace TimeTrackingAutomation.Process
 									(tmpRow.Key == "Last Run StartTime") ? startTime :
 									(tmpRow.Key == "Last Error Time") ? ErrorTime :
 									(tmpRow.Key == "Run Notes") ? notes :
-									(tmpRow.Key == "Last Run Status") ? runstatus : ""
+									(tmpRow.Key == "Last Run Status") ? runstatus : 
+									(tmpRow.Key == "Initial Check") ? initialcheck :
+									(tmpRow.Key == "Initial Check failed reason") ? reason : ""
 								}
 							}
 					});
@@ -375,16 +379,23 @@ namespace TimeTrackingAutomation.Process
 		}
 		public object InitialCheckSmartsheetColumns(List<OpportunityRollupsheet> result)
 		{
-			foreach (var mapvalue in SmartsheetColumnMapping)
+			foreach (var rollup in result)
 			{
-				var keyValuePairdata = mapvalue;
-				var columnTitle = keyValuePairdata.Key;
-				foreach (var rollup in result)
+				var sheetdata = Client.GetSheet(rollup.TimeTrackingSheetID);
+				foreach (var mapvalue in SmartsheetColumnMapping.Keys)
 				{
-					
+					    if (sheetdata.Columns.Where(x => x.Title.Contains(mapvalue)).Any() == false)
+						{
+						var initialreason = ($"The sheet '{sheetdata.Name}' does not contain a column with the title '{mapvalue}'");
+						RowsFailedImported = TotalRowsfromTimecards - RowsImported;
+						var notes = $"{PROCESS} failed.\n" + "Total rows catched from timecard :" + TotalRowsfromTimecards + "\n" + "Rows imported :" + RowsImported + "\n" + "Rows Failed to Import :" + RowsFailedImported;
+						ErrorTime = DateTime.Now.ToString(CultureInfo.InvariantCulture);
+						LogJobRun(StartTime.ToString(CultureInfo.InvariantCulture),
+						   DateTime.Now.ToString(CultureInfo.InvariantCulture), ErrorTime, notes, false,"Failed",initialreason);
+					    }
 				}
 			}
-				return "";
+			return "";
 		}
 	}
 }
