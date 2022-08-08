@@ -35,6 +35,9 @@ namespace TimeTrackingAutomation.Process
 		private int RowsFailedImported;
 		private int TotalRowsfromTimecards;
 		private string ErrorTime;
+		private string InitialStatus;
+		private string InitialReason;
+
 		public List<ConfigItem> GetConfigSheetDetail()
 		{
 			List<ConfigItem> result = new List<ConfigItem>();
@@ -118,6 +121,8 @@ namespace TimeTrackingAutomation.Process
 				}
 				long sheetid = Convert.ToInt64(rollupsheetid);
 				Sheet sheet = Client.GetSheet(sheetid);
+				//var smartsheetColumn = sheet.Columns.First(c => c.Title == columnName);
+				//var columnValue = row.Cells[smartsheetColumn.Index.Value]?.Value;
 				foreach (Row tmpRow in sheet.Rows)
 				{
 					foreach (Cell tmpCell in tmpRow.Cells)
@@ -133,54 +138,57 @@ namespace TimeTrackingAutomation.Process
 				}
 				if (result.Count > 0)
 				{
-					InitialCheckSmartsheetColumns(result);
-					JiraTempoApi objapi = new JiraTempoApi();
-					if (string.IsNullOrEmpty(LastRunDate))
+					string initialstatus = InitialCheckSmartsheetColumns(result, TempoBulkSheetID);
+					if (initialstatus == "Passed")
 					{
-						fromdate = Convert.ToString(ConfigurationManager.AppSettings["Fromdate"]);
-						todate = Convert.ToString(ConfigurationManager.AppSettings["Todate"]);
-					}
-					else
-					{
-						char[] spearator = { ' ' };
-						string[] datearry = LastRunDate.Split(spearator);
-						string DateString = datearry[0];
-						IFormatProvider culture = new CultureInfo("en-US", true);
-						string startdate = DateTime.ParseExact(DateString, "MM/dd/yyyy", CultureInfo.InvariantCulture).ToString("yyyy-MM-dd");
-						//fromdate = startdate;
-						fromdate = "2022-07-21";
-						todate = DateTime.Now.ToString("yyyy-MM-dd");
-						//fromdate >= LastRunDate;
-						//todate <= todate;
-					}
-					RootObject data = objapi.Getworklog(fromdate, todate);
-					if (data.results?.Count > 0)
-					{
-						TotalRowsfromTimecards = data.results.Count;
-						var rolluplist = new List<OpportunityRollupsheet>();
-						char[] spearator = { '-' };
-						var rollupdata = data.results.Select(x => new { ProjectID = x.issue.key.Split(spearator).First() }).Distinct();
-						//var rollupdata = data.results.Select(x => new { x.issue.id, x.issue.key, ProjectID = x.issue.key.Split(spearator).First(), x.author.accountId, x.author.displayName, x.startDate }).Distinct();
-						//SaveRollupSheetDetail(rollupdata, sheetid);
-						foreach (var worklog in data.results)
+						JiraTempoApi objapi = new JiraTempoApi();
+						if (string.IsNullOrEmpty(LastRunDate))
 						{
-							foreach (var rollup in result)
+							fromdate = Convert.ToString(ConfigurationManager.AppSettings["Fromdate"]);
+							todate = Convert.ToString(ConfigurationManager.AppSettings["Todate"]);
+						}
+						else
+						{
+							char[] spearator = { ' ' };
+							string[] datearry = LastRunDate.Split(spearator);
+							string DateString = datearry[0];
+							IFormatProvider culture = new CultureInfo("en-US", true);
+							string startdate = DateTime.ParseExact(DateString, "MM/dd/yyyy", CultureInfo.InvariantCulture).ToString("yyyy-MM-dd");
+							//fromdate = startdate;
+							fromdate = "2022-07-21";
+							todate = DateTime.Now.ToString("yyyy-MM-dd");
+							//fromdate >= LastRunDate;
+							//todate <= todate;
+						}
+						RootObject data = objapi.Getworklog(fromdate, todate);
+						if (data.results?.Count > 0)
+						{
+							TotalRowsfromTimecards = data.results.Count;
+							var rolluplist = new List<OpportunityRollupsheet>();
+							char[] spearator = { '-' };
+							var rollupdata = data.results.Select(x => new { ProjectID = x.issue.key.Split(spearator).First() }).Distinct();
+							//var rollupdata = data.results.Select(x => new { x.issue.id, x.issue.key, ProjectID = x.issue.key.Split(spearator).First(), x.author.accountId, x.author.displayName, x.startDate }).Distinct();
+							//SaveRollupSheetDetail(rollupdata, sheetid);
+							foreach (var worklog in data.results)
 							{
-								if (worklog.issue.key?.Split(spearator).First() == rollup.ProjectId)
+								foreach (var rollup in result)
 								{
-									AddTempoSheetDetail(worklog, rollup.TimeTrackingSheetID);
-								}
-								else if (result.Where(x => x.ProjectId.Contains(worklog.issue.key?.Split(spearator).First())).Any() == false)
-								{
-									AddTempoSheetDetail(worklog, TempoBulkSheetID);
-									break;
+									if (worklog.issue.key?.Split(spearator).First() == rollup.ProjectId)
+									{
+										AddTempoSheetDetail(worklog, rollup.TimeTrackingSheetID);
+									}
+									else if (result.Where(x => x.ProjectId.Contains(worklog.issue.key?.Split(spearator).First())).Any() == false)
+									{
+										AddTempoSheetDetail(worklog, TempoBulkSheetID);
+										break;
+									}
 								}
 							}
 						}
-					}
-					else
-					{
-						Logger.LogToConsole("Unable to get worklog data.");
+						else
+						{
+							Logger.LogToConsole("Unable to get worklog data.");
+						}
 					}
 				}
 			}
@@ -194,37 +202,7 @@ namespace TimeTrackingAutomation.Process
 			return result;
 		}
 
-		public object SaveRollupSheetDetail(OpportunityRollupsheet sheetdata, long configsheetid)
-		{
-			string status = "";
-			try
-			{
-				long sheetid = Convert.ToInt64(configsheetid);
-				Sheet sheet = Client.GetSheet(sheetid);
-				columnMap.Clear();
-				foreach (Column column in sheet.Columns)
-					columnMap.Add(column.Title, (long)column.Id);
 
-				List<Cell> cells = new List<Cell>();
-				Cell[] cellsA = null;
-				Row rowA = null;
-				cellsA = new Cell[]
-				{
-					 new Cell.AddCellBuilder(sheet.Columns[0].Id, sheetdata.ProjectId).Build()
-					//,new Cell.AddCellBuilder(sheet.Columns[1].Id, sheetdata.TimeTrackingSheetID).Build()
-					//,new Cell.AddCellBuilder(sheet.Columns[2].Id, sheetdata.TimeTrackingSheetLinks).Build()
-				};
-				rowA = new Row.AddRowBuilder(true, null, null, null, null).SetCells(cellsA).Build();
-				IList<Row> newRows = Client.SheetResources.RowResources.AddRows(sheetid, new Row[] { rowA });
-				Logger.LogToConsole($"Adding RowsImported count {RowsImported} rows");
-				status = "Data inserted Successfully";
-			}
-			catch (Exception ex)
-			{
-				Logger.LogToConsole(ex.Message);
-			}
-			return status;
-		}
 
 		public object AddTempoSheetDetail(WorklogModel worklog, long configsheetid)
 		{
@@ -301,7 +279,7 @@ namespace TimeTrackingAutomation.Process
 				var notes = $"{PROCESS} failed.\n" + "Total rows catched from timecard :" + TotalRowsfromTimecards + "\n" + "Rows imported :" + RowsImported + "\n" + "Rows Failed to Import :" + RowsFailedImported;
 				ErrorTime = DateTime.Now.ToString(CultureInfo.InvariantCulture);
 				LogJobRun(StartTime.ToString(CultureInfo.InvariantCulture),
-				   DateTime.Now.ToString(CultureInfo.InvariantCulture), ErrorTime, notes, false,"","");
+				   DateTime.Now.ToString(CultureInfo.InvariantCulture), ErrorTime, notes, false, InitialStatus, InitialReason);
 			}
 			return status;
 		}
@@ -312,9 +290,9 @@ namespace TimeTrackingAutomation.Process
 			var startTime = StartTime.ToString(CultureInfo.InvariantCulture);
 			var endTime = DateTime.Now.ToString(CultureInfo.InvariantCulture);
 			var notes = $"{PROCESS} complete.\n" + "Total rows catched from timecard :" + TotalRowsfromTimecards + "\n" + "Rows imported:" + RowsImported + "\n" + "Rows Failed to Import:" + RowsFailedImported;
-			LogJobRun(startTime, endTime, ErrorTime, notes, true,"","");
+			LogJobRun(startTime, endTime, ErrorTime, notes, true, InitialStatus, InitialReason);
 		}
-		public void LogJobRun(string startTime, string finishTime, string ErrorTime, string notes, bool failed,string initialcheck, string reason)
+		public void LogJobRun(string startTime, string finishTime, string ErrorTime, string notes, bool failed, string initialstatus, string reason)
 		{
 			long sheetid = Convert.ToInt64(ConfigurationManager.AppSettings["JiraTempoConfigsheet"]);
 			Sheet RunLogSheet = Client.GetSheet(sheetid);
@@ -359,16 +337,12 @@ namespace TimeTrackingAutomation.Process
 								new Cell()
 								{
 									ColumnId = RunLogSheet.GetColumnByTitle(CONFIGURATION_VALUE1_COLUMN).Id,
-									//Value = (tmpRow.Key == "Last Run EndTime" || tmpRow.Key == "Last Success Time" || tmpRow.Key == "Last Error Time") ? finishTime : 
-									//(tmpRow.Key == "Last Run StartTime") ? startTime : 
-									//(tmpRow.Key == "Run Notes") ? notes : 
-									//(tmpRow.Key == "Last Run Status") ? runstatus : ""
 									Value = (tmpRow.Key == "Last Run EndTime" || tmpRow.Key == "Last Success Time") ? finishTime :
 									(tmpRow.Key == "Last Run StartTime") ? startTime :
 									(tmpRow.Key == "Last Error Time") ? ErrorTime :
 									(tmpRow.Key == "Run Notes") ? notes :
-									(tmpRow.Key == "Last Run Status") ? runstatus : 
-									(tmpRow.Key == "Initial Check") ? initialcheck :
+									(tmpRow.Key == "Last Run Status") ? runstatus :
+									(tmpRow.Key == "Initial Check") ? initialstatus :
 									(tmpRow.Key == "Initial Check failed reason") ? reason : ""
 								}
 							}
@@ -377,25 +351,77 @@ namespace TimeTrackingAutomation.Process
 			}
 			IList<Row> updatedRow = Client.SheetResources.RowResources.UpdateRows(sheetid, rowsToUpdate);
 		}
-		public object InitialCheckSmartsheetColumns(List<OpportunityRollupsheet> result)
+		public string InitialCheckSmartsheetColumns(List<OpportunityRollupsheet> result, long TempoBulkSheetID)
 		{
+			InitialReason = string.Empty;
+
+
+			var notes = string.Empty;
+			RowsFailedImported = TotalRowsfromTimecards - RowsImported;
+			notes = $"{PROCESS} failed.\n" + "Total rows catched from timecard :" + TotalRowsfromTimecards + "\n" + "Rows imported :" + RowsImported + "\n" + "Rows Failed to Import :" + RowsFailedImported;
+			ErrorTime = DateTime.Now.ToString(CultureInfo.InvariantCulture);
 			foreach (var rollup in result)
 			{
 				var sheetdata = Client.GetSheet(rollup.TimeTrackingSheetID);
 				foreach (var mapvalue in SmartsheetColumnMapping.Keys)
 				{
-					    if (sheetdata.Columns.Where(x => x.Title.Contains(mapvalue)).Any() == false)
-						{
-						var initialreason = ($"The sheet '{sheetdata.Name}' does not contain a column with the title '{mapvalue}'");
-						RowsFailedImported = TotalRowsfromTimecards - RowsImported;
-						var notes = $"{PROCESS} failed.\n" + "Total rows catched from timecard :" + TotalRowsfromTimecards + "\n" + "Rows imported :" + RowsImported + "\n" + "Rows Failed to Import :" + RowsFailedImported;
-						ErrorTime = DateTime.Now.ToString(CultureInfo.InvariantCulture);
-						LogJobRun(StartTime.ToString(CultureInfo.InvariantCulture),
-						   DateTime.Now.ToString(CultureInfo.InvariantCulture), ErrorTime, notes, false,"Failed",initialreason);
-					    }
+					if (sheetdata.Columns.Where(x => x.Title.Contains(mapvalue)).Any() == false)
+					{
+						InitialReason += ($"The sheet '{sheetdata.Name}' does not contain a column with the title '{mapvalue}'" + "\n");
+						InitialStatus = "Failed";
+					}
+					else if (sheetdata.Columns.Where(x => x.Title.Contains(mapvalue)).Any() == true)
+					{
+						//InitialReason = "";
+						InitialStatus = "Passed";
+					}
 				}
 			}
-			return "";
+			if (TempoBulkSheetID > 0)
+			{
+				var Bulksheetdata = Client.GetSheet(TempoBulkSheetID);
+				foreach (var key in SmartsheetColumnMapping.Keys)
+				{
+					if (Bulksheetdata.Columns.Where(x => x.Title.Contains(key)).Any() == false)
+					{
+						InitialReason += ($"The sheet '{Bulksheetdata.Name}' does not contain a column with the title '{key}'" + "\n");
+						InitialStatus = "Failed";
+					}
+				}
+			}
+			LogJobRun(StartTime.ToString(CultureInfo.InvariantCulture),DateTime.Now.ToString(CultureInfo.InvariantCulture), ErrorTime, notes, false, InitialStatus, InitialReason);
+			return InitialStatus;
+		}
+		public object SaveRollupSheetDetail(OpportunityRollupsheet sheetdata, long configsheetid)
+		{
+			string status = "";
+			try
+			{
+				long sheetid = Convert.ToInt64(configsheetid);
+				Sheet sheet = Client.GetSheet(sheetid);
+				columnMap.Clear();
+				foreach (Column column in sheet.Columns)
+					columnMap.Add(column.Title, (long)column.Id);
+
+				List<Cell> cells = new List<Cell>();
+				Cell[] cellsA = null;
+				Row rowA = null;
+				cellsA = new Cell[]
+				{
+					 new Cell.AddCellBuilder(sheet.Columns[0].Id, sheetdata.ProjectId).Build()
+					//,new Cell.AddCellBuilder(sheet.Columns[1].Id, sheetdata.TimeTrackingSheetID).Build()
+					//,new Cell.AddCellBuilder(sheet.Columns[2].Id, sheetdata.TimeTrackingSheetLinks).Build()
+				};
+				rowA = new Row.AddRowBuilder(true, null, null, null, null).SetCells(cellsA).Build();
+				IList<Row> newRows = Client.SheetResources.RowResources.AddRows(sheetid, new Row[] { rowA });
+				Logger.LogToConsole($"Adding RowsImported count {RowsImported} rows");
+				status = "Data inserted Successfully";
+			}
+			catch (Exception ex)
+			{
+				Logger.LogToConsole(ex.Message);
+			}
+			return status;
 		}
 	}
 }

@@ -1,18 +1,6 @@
 
- 06-08-2022 00:07:08 :   : Fetching Configuration sheet
+ 08-08-2022 22:54:01 :   : Fetching Configuration sheet
 
- 06-08-2022 00:07:14 :   : Caching list of record from rollup sheets
+ 08-08-2022 22:54:03 :   : Caching list of record from rollup sheets
 
- 06-08-2022 00:07:20 :   : Fetching Bulk Worklog Data from Tempo Api Process.
-
- 06-08-2022 00:07:22 :   : Cached 2 record from worklog from Tempo api Call.
-
- 06-08-2022 00:07:22 :   : Start Smartsheet Api Process
-
- 06-08-2022 00:07:23 :   : The sheet 'TempoBulkSheet' does not contain a column with the title 'Author'06-08-2022 00:07:23
-
- 06-08-2022 00:07:25 :   : Start Smartsheet Api Process
-
- 06-08-2022 00:07:25 :   : The sheet 'ProjectTwoTimesheet' does not contain a column with the title 'DescriptionCopy'06-08-2022 00:07:25
-
- 06-08-2022 00:07:26 :   : Cached 2 record from Opportunity rollup sheets
+ 08-08-2022 22:54:06 :   : Cached 2 record from Opportunity rollup sheets
