@@ -17,14 +17,15 @@ namespace TimeTrackingAutomation.Process
 
 		private const string PROCESS = "Tempo Api Process";
 		public string token = ConfigurationManager.AppSettings["TempoAccessToken"];
-
+		public string TempoAPIbaseURL = "https://api.tempo.io/core/3";
+		
 		public ResultObject Getteams()
 		{
 			try
 			{
 				{
 					var Client = new HttpClient();
-					string urlStr = "https://api.tempo.io/core/3/teams";
+					string urlStr = TempoAPIbaseURL+"/teams";
 					HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, urlStr);
 					request.Headers.Add("Authorization", "Bearer " + token);
 					HttpResponseMessage response = Client.SendAsync(request).Result;
@@ -53,7 +54,7 @@ namespace TimeTrackingAutomation.Process
 			{
 
 				var Client = new HttpClient();
-				string urlStr = "https://api.tempo.io/core/3/teams/" + teamid + "/members";
+				string urlStr = TempoAPIbaseURL + "/teams/" + teamid + "/members";
 				HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, urlStr);
 				request.Headers.Add("Authorization", "Bearer " + token);
 				HttpResponseMessage response = Client.SendAsync(request).Result;
@@ -82,7 +83,7 @@ namespace TimeTrackingAutomation.Process
 		}
 		public RootObject GetworklogwithDate(string userId, string fromdate, string todate)
 		{
-			string query = "https://api.tempo.io/core/3/worklogs/user/" + userId + "?from=" + fromdate + "&to=" + todate + "";
+			string query = TempoAPIbaseURL + "/worklogs/user/" + userId + "?from=" + fromdate + "&to=" + todate + "";
 			try
 			{
 				{
@@ -108,7 +109,7 @@ namespace TimeTrackingAutomation.Process
 			{
 
 				var Client = new HttpClient();
-				string urlStr = "https://api.tempo.io/core/3/teams/" + teamid + "/members";
+				string urlStr = TempoAPIbaseURL+ "/teams/" + teamid + "/members";
 				HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, urlStr);
 				request.Headers.Add("Authorization", "Bearer " + token);
 				HttpResponseMessage response = Client.SendAsync(request).Result;
@@ -140,7 +141,7 @@ namespace TimeTrackingAutomation.Process
 		{
 
 			Logger.LogToConsole($"Fetching Bulk Worklog Data from {PROCESS}.");
-			string query = "https://api.tempo.io/core/3/worklogs"+"?from=" + fromdate + "&to=" + todate + "";
+			string query = TempoAPIbaseURL + "/worklogs" + "?from=" + fromdate + "&to=" + todate + "";
 			RootObject data = null;
 			try
 			{
@@ -175,7 +176,7 @@ namespace TimeTrackingAutomation.Process
 			{
 				{
 					var Client = new HttpClient();
-					string urlStr = "https://api.tempo.io/core/3/worklogs/issue/" + issuekey;
+					string urlStr = TempoAPIbaseURL + "/worklogs/issue/" + issuekey;
 					HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, urlStr);
 					request.Headers.Add("Authorization", "Bearer " + token);
 					HttpResponseMessage response = Client.SendAsync(request).Result;
@@ -198,7 +199,7 @@ namespace TimeTrackingAutomation.Process
 				{
 					string fromdate = Convert.ToString(ConfigurationManager.AppSettings["Fromdate"]);
 					string todate = Convert.ToString(ConfigurationManager.AppSettings["Todate"]);
-					string query = "https://api.tempo.io/core/3/worklogs/project/" + projectkey + "?from=" + fromdate + "&to=" + todate + "";
+					string query = TempoAPIbaseURL + "/worklogs/project/" + projectkey + "?from=" + fromdate + "&to=" + todate + "";
 					var Client = new HttpClient();
 					//string urlStr = "https://api.tempo.io/core/3/worklogs/project/" + projectkey;
 					HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, query);

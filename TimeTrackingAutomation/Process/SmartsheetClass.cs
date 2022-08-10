@@ -327,6 +327,8 @@ namespace TimeTrackingAutomation.Process
 			}
 			if (rowMap.Count > 0)
 			{
+				//string Successtime = string.Empty;
+
 				foreach (KeyValuePair<string, long> tmpRow in rowMap)
 				{
 					rowsToUpdate.Add(new Row
@@ -354,27 +356,28 @@ namespace TimeTrackingAutomation.Process
 		public string InitialCheckSmartsheetColumns(List<OpportunityRollupsheet> result, long TempoBulkSheetID)
 		{
 			InitialReason = string.Empty;
-
-
 			var notes = string.Empty;
 			RowsFailedImported = TotalRowsfromTimecards - RowsImported;
 			notes = $"{PROCESS} failed.\n" + "Total rows catched from timecard :" + TotalRowsfromTimecards + "\n" + "Rows imported :" + RowsImported + "\n" + "Rows Failed to Import :" + RowsFailedImported;
 			ErrorTime = DateTime.Now.ToString(CultureInfo.InvariantCulture);
+			//bool caseSensitive = false;
+			var missedcolumns = string.Empty;
 			foreach (var rollup in result)
 			{
 				var sheetdata = Client.GetSheet(rollup.TimeTrackingSheetID);
 				foreach (var mapvalue in SmartsheetColumnMapping.Keys)
 				{
-					if (sheetdata.Columns.Where(x => x.Title.Contains(mapvalue)).Any() == false)
+					var column = sheetdata.Columns.FirstOrDefault(c => String.Equals(c.Title, mapvalue));
+					//var column = sheetdata.Columns.FirstOrDefault(c => String.Equals(c.Title, mapvalue, caseSensitive ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase));
+					//if (sheetdata.Columns.FirstOrDefault(c => String.Equals(c.Title, mapvalue, caseSensitive ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase)))
+					//if (sheetdata.Columns.Where(x => x.Title.Contains(mapvalue)).Any() == false)
+					//{
+					if (column == null)
 					{
 						InitialReason += ($"The sheet '{sheetdata.Name}' does not contain a column with the title '{mapvalue}'" + "\n");
 						InitialStatus = "Failed";
 					}
-					else if (sheetdata.Columns.Where(x => x.Title.Contains(mapvalue)).Any() == true)
-					{
-						//InitialReason = "";
-						InitialStatus = "Passed";
-					}
+					//}
 				}
 			}
 			if (TempoBulkSheetID > 0)
@@ -382,14 +385,25 @@ namespace TimeTrackingAutomation.Process
 				var Bulksheetdata = Client.GetSheet(TempoBulkSheetID);
 				foreach (var key in SmartsheetColumnMapping.Keys)
 				{
-					if (Bulksheetdata.Columns.Where(x => x.Title.Contains(key)).Any() == false)
+					//if (Bulksheetdata.Columns.Where(x => x.Title.Contains(key)).Any() == false)
+					//{
+					var column = Bulksheetdata.Columns.FirstOrDefault(c => String.Equals(c.Title, key));
+					if (column == null)
 					{
 						InitialReason += ($"The sheet '{Bulksheetdata.Name}' does not contain a column with the title '{key}'" + "\n");
+						//missedcolumns += key;
 						InitialStatus = "Failed";
 					}
+					//}
 				}
+				//InitialReason += ($"The sheet '{Bulksheetdata.Name}' does not contain a column with the title "+ missedcolumns);
 			}
-			LogJobRun(StartTime.ToString(CultureInfo.InvariantCulture),DateTime.Now.ToString(CultureInfo.InvariantCulture), ErrorTime, notes, false, InitialStatus, InitialReason);
+			if (InitialStatus != "Failed")
+			{
+				InitialReason = "";
+				InitialStatus = "Passed";
+			}
+			LogJobRun(StartTime.ToString(CultureInfo.InvariantCulture), DateTime.Now.ToString(CultureInfo.InvariantCulture), ErrorTime, notes, false, InitialStatus, InitialReason);
 			return InitialStatus;
 		}
 		public object SaveRollupSheetDetail(OpportunityRollupsheet sheetdata, long configsheetid)
