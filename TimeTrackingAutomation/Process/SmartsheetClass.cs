@@ -169,6 +169,10 @@ namespace TimeTrackingAutomation.Process
 							var rollupdata = data.results.Select(x => new { ProjectID = x.issue.key.Split(spearator).First() }).Distinct();
 							//var rollupdata = data.results.Select(x => new { x.issue.id, x.issue.key, ProjectID = x.issue.key.Split(spearator).First(), x.author.accountId, x.author.displayName, x.startDate }).Distinct();
 							//SaveRollupSheetDetail(rollupdata, sheetid);
+							Parallel.ForEach(data.results.AsEnumerable(), a =>
+							{
+								Console.WriteLine("Accountname" + a.author.displayName);
+							});
 							foreach (var worklog in data.results)
 							{
 								foreach (var rollup in result)
@@ -362,41 +366,44 @@ namespace TimeTrackingAutomation.Process
 			ErrorTime = DateTime.Now.ToString(CultureInfo.InvariantCulture);
 			//bool caseSensitive = false;
 			var missedcolumns = string.Empty;
+			var missedkeycolumns = string.Empty;
 			foreach (var rollup in result)
 			{
 				var sheetdata = Client.GetSheet(rollup.TimeTrackingSheetID);
 				foreach (var mapvalue in SmartsheetColumnMapping.Keys)
 				{
 					var column = sheetdata.Columns.FirstOrDefault(c => String.Equals(c.Title, mapvalue));
-					//var column = sheetdata.Columns.FirstOrDefault(c => String.Equals(c.Title, mapvalue, caseSensitive ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase));
-					//if (sheetdata.Columns.FirstOrDefault(c => String.Equals(c.Title, mapvalue, caseSensitive ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase)))
-					//if (sheetdata.Columns.Where(x => x.Title.Contains(mapvalue)).Any() == false)
-					//{
 					if (column == null)
 					{
-						InitialReason += ($"The sheet '{sheetdata.Name}' does not contain a column with the title '{mapvalue}'" + "\n");
+						missedkeycolumns += missedkeycolumns != "" ? (", '" + mapvalue + "'") : (missedkeycolumns += "'" + mapvalue + "'");
+						InitialReason += ($"The sheet '{sheetdata.Name}' does not contain a column with the title " + missedkeycolumns + "\n");
 						InitialStatus = "Failed";
 					}
-					//}
 				}
 			}
+
+
+
 			if (TempoBulkSheetID > 0)
 			{
 				var Bulksheetdata = Client.GetSheet(TempoBulkSheetID);
 				foreach (var key in SmartsheetColumnMapping.Keys)
 				{
-					//if (Bulksheetdata.Columns.Where(x => x.Title.Contains(key)).Any() == false)
-					//{
 					var column = Bulksheetdata.Columns.FirstOrDefault(c => String.Equals(c.Title, key));
 					if (column == null)
 					{
-						InitialReason += ($"The sheet '{Bulksheetdata.Name}' does not contain a column with the title '{key}'" + "\n");
-						//missedcolumns += key;
+						if (missedcolumns != "")
+						{
+							missedcolumns += ", '" + key + "'";
+						}
+						else
+						{
+							missedcolumns += "'" + key + "'";
+						}
 						InitialStatus = "Failed";
 					}
-					//}
 				}
-				//InitialReason += ($"The sheet '{Bulksheetdata.Name}' does not contain a column with the title "+ missedcolumns);
+				InitialReason += ($"The sheet '{Bulksheetdata.Name}' does not contain a column with the title "+ missedcolumns + "\n");
 			}
 			if (InitialStatus != "Failed")
 			{
